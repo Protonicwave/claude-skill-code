@@ -91,7 +91,15 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 After the last phase:
 
 1. Run every check on the whole branch and show what each produced.
-2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge. Verify each finding yourself, fix the real ones as separate commits, and note any you reject with the reason.
+2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge.
+
+   Settle every finding with evidence, not opinion, because the author is the person least able to judge their own code:
+
+   - **Over-built**: delete or inline the piece and run the suite. Green with no requirement lost: the piece goes. Green but a requirement is lost: the piece stays, and the missing test that should have caught its removal is the real defect, so add it. Either way the finding produces a change.
+   - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
+   - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
+
+   Commit each fix separately.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
