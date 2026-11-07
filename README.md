@@ -7,6 +7,7 @@ A Claude Code skill, `engineer`, for writing production-quality code: plan first
 - Small, obvious changes go straight to test, fix, check and commit.
 - Anything larger gets a plan in `.plans/`, approved once, then built in phases. Each phase ends with the full suite, linter and type-checker passing and a real commit.
 - Plans are listed in `.git/info/exclude`, so they never reach the repository and no `.gitignore` entry is needed.
+- Over-building is caught in three places: the plan names a caller for every new piece, complexity and dead-code linters fail the build, and a fresh subagent reviews the branch diff before the pull request.
 - `engineer/scripts/check_diff.py` flags em dashes, emoji, tool attribution, plan references and US spellings in staged changes, commit ranges or a single file.
 
 ## Layout

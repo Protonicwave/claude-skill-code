@@ -23,11 +23,18 @@ Commands:
 - test:
 - lint:
 - type-check:
+- dead-code:
 - build:
 
 ## Shape
 
-The pieces, where the boundaries sit, how data flows. Where new types live. What is deliberately left untouched.
+The pieces, where the boundaries sit, how data flows. What is deliberately left untouched.
+
+New pieces, each with the existing or planned code that calls it:
+
+- <module, type, interface or config option>: called by <caller>.
+
+Anything without a caller is cut before approval. This list is where over-building shows up while it is still cheap to remove.
 
 ## Decisions
 

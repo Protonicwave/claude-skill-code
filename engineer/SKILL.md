@@ -22,7 +22,7 @@ Read these when the step below says to, not up front.
 Before any other action in a repository:
 
 1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
-2. Identify the commands for install, test, lint, type-check and build. If one cannot be found, say so and ask rather than guess.
+2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 
 If the directory is not a git repository and the task is a new project, run `git init -b main`.
@@ -66,7 +66,7 @@ Set it in the plan:
 5. Do the next unticked phase:
    - Write tests as the plan's test list specifies: first for bug fixes and for logic with clear inputs and outputs, alongside for wiring and UI.
    - Implement.
-   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter and the type-checker.
+   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check.
    - Review your own diff against the checklist below.
    - Stage, run `python <skill-dir>/scripts/check_diff.py`, fix anything it reports, then commit following `git.md`.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
@@ -81,12 +81,12 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 After the last phase:
 
 1. Run every check on the whole branch and show what each produced.
-2. Review the full branch diff (`git diff <base>...HEAD`) once more against the checklist, as a whole: duplication across phases only shows up here.
+2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge. Verify each finding yourself, fix the real ones as separate commits, and note any you reject with the reason.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
 6. Set the plan's `Status` to `complete`.
-7. Report: what was run and what it produced, what is done and what is not, and the weakest point in the result with the condition under which it breaks.
+7. Report: what was run and what it produced, what the reviewer found and what was done about it, what is done and what is not, and the weakest point in the result with the condition under which it breaks.
 
 ## Self-review checklist
 
@@ -108,7 +108,7 @@ Run through this on every diff before committing. Each item is a common way gene
 - Search before reading. Read the part of a file you need, not the whole file.
 - Make independent tool calls in parallel.
 - Do not re-read a file you just wrote.
-- Do not spawn subagents unless a search genuinely spans many directories.
+- Do not spawn subagents, except the reviewer in Finish, unless a search genuinely spans many directories.
 - Decide and move on. Do not narrate options you will not take.
 
 ## Writing
