@@ -23,6 +23,7 @@ Commands:
 - test:
 - lint:
 - type-check:
+- dead-code:
 - build:
 
 ## Shape

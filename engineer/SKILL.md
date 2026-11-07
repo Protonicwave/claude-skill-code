@@ -22,7 +22,7 @@ Read these when the step below says to, not up front.
 Before any other action in a repository:
 
 1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
-2. Identify the commands for install, test, lint, type-check and build. If one cannot be found, say so and ask rather than guess.
+2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 
 If the directory is not a git repository and the task is a new project, run `git init -b main`.
@@ -66,7 +66,7 @@ Set it in the plan:
 5. Do the next unticked phase:
    - Write tests as the plan's test list specifies: first for bug fixes and for logic with clear inputs and outputs, alongside for wiring and UI.
    - Implement.
-   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter and the type-checker.
+   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check.
    - Review your own diff against the checklist below.
    - Stage, run `python <skill-dir>/scripts/check_diff.py`, fix anything it reports, then commit following `git.md`.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.

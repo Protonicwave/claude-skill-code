@@ -25,6 +25,8 @@ Follow the repository's existing tooling. The defaults below are for new project
   ```
 
 - ESLint with `typescript-eslint`'s `strictTypeChecked` config, or Biome if the repository uses it. Make sure these are on: `no-floating-promises`, `no-misused-promises`, `no-explicit-any`, `switch-exhaustiveness-check`.
+- Size and complexity limits as lint errors: `complexity: 10`, `max-depth: 3`, `max-params: 4`, `max-lines-per-function: 60`. A failure is a design signal: restructure rather than raise the limit.
+- Knip, run in CI and before each commit, to catch unused files, exports and dependencies. It finds the code nothing calls, which is the commonest form of over-building.
 - Vitest for tests, unless the repository uses another runner.
 
 ## Types

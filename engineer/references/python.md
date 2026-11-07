@@ -14,13 +14,19 @@ Follow the repository's existing tooling. The defaults below are for new project
 
   ```toml
   [tool.ruff.lint]
-  select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "S", "PT", "N"]
+  select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "S", "PT", "N", "C90", "PLR"]
+
+  [tool.ruff.lint.mccabe]
+  max-complexity = 10
 
   [tool.ruff.lint.per-file-ignores]
-  # pytest's assertion rewriting relies on bare assert in tests.
-  "tests/**" = ["S101"]
+  # pytest's assertion rewriting relies on bare assert, and test tables use literal values.
+  "tests/**" = ["S101", "PLR2004"]
   ```
 
+  `C90` and `PLR` turn over-built code into lint failures: too many branches, arguments, returns or statements in one function. Treat a failure as a design signal and restructure, rather than raising the limit.
+
+- Vulture (`vulture src --min-confidence 80`) before each commit, to catch functions, classes and variables nothing calls. Ruff only finds unused imports and locals.
 - mypy with `strict = true`, or pyright in strict mode if the repository uses it.
 - pytest. Tests live in `tests/`, mirroring the package layout.
 - `src/` layout for anything that will be installed or imported by other code.
