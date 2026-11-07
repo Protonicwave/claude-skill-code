@@ -32,9 +32,29 @@ macOS or Linux:
 ln -s "$PWD/engineer" ~/.claude/skills/engineer
 ```
 
+Then make every session in a git repository load it, by adding a SessionStart hook to `~/.claude/settings.json` (use `python3` where `python` is not Python 3):
+
+```json
+"hooks": {
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python \"<home>/.claude/skills/engineer/scripts/session_start.py\"",
+          "timeout": 10
+        }
+      ]
+    }
+  ]
+}
+```
+
+The hook runs on startup, resume, clear and compaction. Inside a git repository it tells Claude to load the skill before changing any file. Outside one it prints nothing. It points at the skill rather than containing it, because Claude Code truncates hook context at about 2 KB.
+
 ## Use
 
-Claude picks the skill up on coding requests. Type `/engineer` to force it, or to continue a planned task in a new chat.
+With the hook installed, the skill loads on its own in any repository. Type `/engineer` to continue a planned task in a new chat.
 
 ```sh
 python engineer/scripts/check_diff.py               # staged changes
