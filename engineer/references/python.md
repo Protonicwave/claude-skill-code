@@ -1,0 +1,81 @@
+# Python
+
+Follow the repository's existing tooling. The defaults below are for new projects or where the repository has none.
+
+## Detect
+
+`pyproject.toml`, `requirements*.txt`, `setup.cfg`, `uv.lock`, `poetry.lock`. The lock file tells you the package manager: use that one.
+
+## Tooling defaults for new projects
+
+- Python 3.12 or later, declared in `requires-python`.
+- `pyproject.toml` as the single config file. `uv` if installed, otherwise `venv` and `pip`.
+- Ruff for linting and formatting:
+
+  ```toml
+  [tool.ruff.lint]
+  select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "S", "PT", "N"]
+
+  [tool.ruff.lint.per-file-ignores]
+  # pytest's assertion rewriting relies on bare assert in tests.
+  "tests/**" = ["S101"]
+  ```
+
+- mypy with `strict = true`, or pyright in strict mode if the repository uses it.
+- pytest. Tests live in `tests/`, mirroring the package layout.
+- `src/` layout for anything that will be installed or imported by other code.
+
+## Types
+
+- Annotate every function signature. No implicit `Any`. Explicit `Any` only at a boundary, with a comment.
+- `@dataclass(frozen=True, slots=True)` for value objects.
+- `Enum` or `Literal` for closed sets. `NewType` for identifiers that must not be mixed up.
+- Parse external data into typed objects at the boundary. Use the standard library unless validation is heavy enough to justify a dependency, or the repository already uses pydantic.
+- `typing.assert_never` in the final branch of exhaustive `match` statements.
+
+## Errors
+
+- Raise specific built-in exceptions where they fit (`ValueError`, `KeyError`, `LookupError`). Define a domain exception only when a caller needs to catch it specifically.
+- `raise NewError(...) from err` when wrapping, to keep the cause.
+- No bare `except:`. No `except Exception` except at the process boundary.
+- `assert` only for internal invariants that indicate a bug. Never for validating input, because `python -O` strips assertions.
+
+## Resources and I/O
+
+- `with` for every file, lock, connection and session.
+- Every network call has a timeout. `requests` and `httpx` have no safe default: pass `timeout=` explicitly.
+- `pathlib.Path` for paths. Pass `encoding="utf-8"` to every text-mode open: the default varies by platform.
+- Generators or iterators for data whose size you do not control.
+- `subprocess.run([...], check=True)` with an argument list. Never `shell=True` with interpolated input.
+
+## Idiom
+
+- No mutable default arguments.
+- Comprehensions for simple transforms. A loop once the logic needs more than one condition.
+- `logging.getLogger(__name__)` in modules, with `%`-style arguments so formatting is lazy. No `print` outside CLI output.
+- Absolute imports. No wildcard imports. No import-time side effects beyond defining things.
+- Constants in `UPPER_SNAKE_CASE` at module top, with units in the name.
+
+## Tests
+
+- Plain `assert` with pytest's rewriting.
+- `@pytest.mark.parametrize` for edge-case tables.
+- `tmp_path` for filesystem tests and `monkeypatch` for environment and clock. Do not patch internal functions.
+- Commands: `pytest`, `ruff check .`, `ruff format --check .`, `mypy .` unless the repository says otherwise.
+
+## .gitignore for new projects
+
+```
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.env
+```
