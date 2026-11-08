@@ -47,7 +47,7 @@ Follow the repository's existing tooling. The defaults below are for new project
 ## Async and I/O
 
 - Every `fetch` gets a timeout: `signal: AbortSignal.timeout(ms)`.
-- `Promise.all` for independent work. Bounded concurrency when mapping over a list whose size you do not control.
+- `Promise.all` for independent work, not `await` in a loop, which runs them one after another. Keep the loop where order matters, and bound the concurrency when mapping over a list whose size you do not control.
 - Check `response.ok` before reading the body.
 
 ## Performance
@@ -56,7 +56,6 @@ Traps that change the complexity class or stall a server:
 
 - `array.includes` or `indexOf` inside a loop scans the array every time. Build a `Set` once: `has` is sublinear on average by specification.
 - `array.shift()` moves every remaining element. For a queue, keep a head index into the array instead.
-- `await` inside a loop over independent operations runs them one after another. Start them together and `Promise.all` the results, except where each operation holds a bounded resource (memory, file descriptors, connections) or order matters: there, keep the loop or bound the concurrency.
 - In Node.js, every request callback shares one event loop, so work that grows with client input delays every other client. Reason about each handler's complexity in terms of the input the client controls.
 - The synchronous APIs (`readFileSync`, `execSync`, `zlib` and `crypto` `*Sync` calls) are for scripts, never a request path.
 - `JSON.parse` and `JSON.stringify` are linear but slow on large input. Cap the size of a client's body before parsing it.
