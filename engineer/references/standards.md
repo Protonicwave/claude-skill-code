@@ -45,10 +45,10 @@ For every input, decide the behaviour for: empty, single item, duplicates, out o
 
 Choose the right complexity up front: no query per row in a loop, no loading unbounded data into memory, stream or paginate anything whose size you do not control, use the right data structure for lookups. Beyond that, measure before optimising. Clear code at the right complexity class beats clever code.
 
-When the task states a time, memory or query budget, or exists to make something faster, the budget is a requirement like any other; for a speed-up with no stated figure, set one and say so. A task with neither gets no budget and no timing script: a refactor or bug fix keeps the complexity it had.
+When the task states a time, memory or query budget, or exists to make something faster, the budget is a requirement like any other; for a speed-up with no stated figure, set one in the plan and tell the user. A task with neither gets no budget and no timing script: a refactor or bug fix keeps the complexity it had.
 
-- Write it down with the input size it applies to: "one lookup under 20 µs with the full ranges file loaded", not "fast".
-- Commit a script or test that measures it on that input and prints the figure next to the budget, so the next change can rerun it. Time a fresh process over many repetitions and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless the margin is several times the budget.
+- Write it down with the input size it applies to: "one lookup under 20 µs with the full ranges file loaded", not "fast". For a speed-up, measure the existing code first and report both figures.
+- Commit a script or test that measures it on that input and prints the figure next to the budget, and give its command in the README, so a later change can find and rerun it. Start a fresh process, time many repetitions inside it, and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless its threshold is several times the budget.
 - Run it before each commit that touches the measured code, and report the measured figure, not "within budget".
 
 ## Naming
@@ -75,7 +75,7 @@ When the task states a time, memory or query budget, or exists to make something
 - Real objects by default. Fakes only at I/O boundaries: network, clock, filesystem, external processes. A fake at a boundary may assert what was sent to it; nothing else asserts call counts.
 - One behaviour per test, named for the behaviour (`rejects_negative_quantity`).
 - Every handled edge case has a test.
-- A plan names its critical modules: those the task's correctness rests on, or where a defect loses money, data or access. Each has full line and branch coverage from the suite, checked before every commit that touches it. A line that needs no test, such as an entry point that only wires tested parts together, is excluded with the coverage tool's pragma and the reason on the same line. Coverage proves the code ran, not that the assertions are right: it finds untested code, it does not certify tested code.
+- A plan lists its critical modules, if it has any: those the task's correctness rests on, or where a defect loses money, data or access. Each has full line and branch coverage from the suite, checked before every commit that touches it. A line that needs no test, such as an entry point that only wires tested parts together, is excluded with the coverage tool's pragma and the reason on the same line. Coverage proves the code ran, not that the assertions are right: it finds untested code, it does not certify tested code.
 - The full suite passes before every commit. A test is never deleted, skipped or weakened to make the suite pass. A failure unrelated to the change is reported, not fixed in passing.
 
 ## Security
