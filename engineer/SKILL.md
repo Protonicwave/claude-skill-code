@@ -91,7 +91,7 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 After the last phase:
 
 1. Run every check on the whole branch and show what each produced.
-2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge.
+2. Get an independent review. Spawn one fresh subagent, router-expert if the model-router skill is installed, and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge.
 
    Settle every finding with evidence, not opinion, because the author is the person least able to judge their own code:
 
@@ -127,7 +127,7 @@ Run through this on every diff before committing. Each item is a common way gene
 - Search before reading. Read the part of a file you need, not the whole file.
 - Make independent tool calls in parallel.
 - Do not re-read a file you just wrote.
-- Do not spawn subagents, except the reviewer in Finish, unless a search genuinely spans many directories.
+- Do not spawn subagents except the reviewer in Finish, a search that genuinely spans many directories, or a step the model-router skill assigns to a tier when that skill is installed.
 - Decide and move on. Do not narrate options you will not take.
 
 ## Writing
