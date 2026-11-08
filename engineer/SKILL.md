@@ -91,11 +91,12 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 After the last phase:
 
 1. Run every check on the whole branch and show what each produced.
-2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge.
+2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge.
 
    Settle every finding with evidence, not opinion, because the author is the person least able to judge their own code:
 
    - **Over-built**: delete or inline the piece and run the suite. Green with no requirement lost: the piece goes. Green but a requirement is lost: the piece stays, and the missing test that should have caught its removal is the real defect, so add it. Either way the finding produces a change.
+   - **Hard to read**: rewrite the passage the reviewer named, by renaming, extracting a function or returning early, and run the suite. Green: keep the rewrite. Red: the rewrite changed behaviour, so undo it and try a smaller one. A comment or a reply explaining the code does not settle it: if it needed explaining, it needed rewriting.
    - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
    - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
 
