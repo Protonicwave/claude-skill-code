@@ -64,14 +64,15 @@ Follow the repository's existing tooling. The defaults below are for new project
 
 ## Performance
 
-Traps that change the complexity class, each documented CPython behaviour:
+Traps that change the complexity class or grow without bound, each documented CPython behaviour:
 
 - `x in some_list` inside a loop scans the list every time. Build a `set` or `dict` once: lookups take constant time on average.
 - `list.pop(0)` and `list.insert(0, x)` move every element. Use `collections.deque` for a queue.
 - `+=` on a `str` or `bytes` in a loop is quadratic in the total length. Append the pieces to a list and `"".join` them once.
 - Range and nearest-value lookups over sorted data: `bisect` on a sorted list of boundaries, O(log n). `insort` is still O(n) per insertion, so load everything and sort once rather than inserting items one by one.
 - `functools.cache` and `lru_cache(maxsize=None)` grow without bound. A cache keyed on external input gets an explicit `maxsize`.
-- To compare two implementations, use `timeit.repeat` and take the minimum: higher readings come from other processes, not from the code. A budget check still reports the median, because callers see the interference too.
+
+To compare two implementations, use `timeit.repeat` and take the minimum: higher readings come from other processes, not from the code.
 
 ## Tests
 
