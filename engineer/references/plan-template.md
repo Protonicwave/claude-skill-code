@@ -42,6 +42,11 @@ Anything without a caller is cut before approval. This list is where over-buildi
 - Measured by: <committed script or test>, run as <command>.
 - Baseline: <figure before the change, if the code exists>.
 
+## Critical modules
+
+- <path>: <why a defect here is costly>.
+- Checked by: <coverage command limited to these paths>.
+
 ## Decisions
 
 - <Decision>. Why. Alternative rejected and why.

@@ -75,6 +75,7 @@ When the task states a time, memory or query budget, or exists to make something
 - Real objects by default. Fakes only at I/O boundaries: network, clock, filesystem, external processes. A fake at a boundary may assert what was sent to it; nothing else asserts call counts.
 - One behaviour per test, named for the behaviour (`rejects_negative_quantity`).
 - Every handled edge case has a test.
+- A plan names its critical modules: those the task's correctness rests on, or where a defect loses money, data or access. Each has full line and branch coverage from the suite, checked before every commit that touches it. A line that needs no test, such as an entry point that only wires tested parts together, is excluded with the coverage tool's pragma and the reason on the same line. Coverage proves the code ran, not that the assertions are right: it finds untested code, it does not certify tested code.
 - The full suite passes before every commit. A test is never deleted, skipped or weakened to make the suite pass. A failure unrelated to the change is reported, not fixed in passing.
 
 ## Security

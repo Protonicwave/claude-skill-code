@@ -79,6 +79,7 @@ Traps that change the complexity class, each documented CPython behaviour:
 - `@pytest.mark.parametrize` for edge-case tables.
 - `tmp_path` for filesystem tests and `monkeypatch` for environment and clock. Do not patch internal functions.
 - Commands: `pytest`, `ruff check .`, `ruff format --check .`, `mypy .` unless the repository says otherwise.
+- Coverage of critical modules: `coverage run --branch -m pytest`, then `coverage report --show-missing --fail-under=100 --include=<paths>`. If the repository already uses pytest-cov, `pytest --cov=<package> --cov-branch --cov-fail-under=100` instead. Exclude a line with `# pragma: no cover: <reason>`, or a branch that cannot be taken with `# pragma: no branch: <reason>`.
 
 ## .gitignore for new projects
 
