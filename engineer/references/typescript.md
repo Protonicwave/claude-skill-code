@@ -75,7 +75,7 @@ Traps that change the complexity class or stall a server:
 - `it.each` for edge-case tables.
 - Fake timers and the network only at the boundary. Do not mock internal modules.
 - Commands: the scripts in `package.json`. For new projects, define `test`, `lint`, `typecheck` (`tsc --noEmit`) and `build`.
-- Coverage of critical modules with Vitest and `@vitest/coverage-v8`: `vitest run --coverage --coverage.include=<paths> --coverage.thresholds.100`. Exclude code with `/* v8 ignore next */` and a comment giving the reason.
+- Coverage of critical modules with Vitest and `@vitest/coverage-v8`: `vitest run --coverage --coverage.include=<paths> --coverage.thresholds.100`. Exclude code with `/* v8 ignore next -- @preserve */` and a comment giving the reason: without `@preserve`, esbuild strips the hint when it compiles TypeScript.
 
 ## .gitignore for new projects
 
