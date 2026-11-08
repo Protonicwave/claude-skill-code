@@ -76,7 +76,7 @@ Set it in the plan:
 5. Do the next unticked phase:
    - Write tests as the plan's test list specifies: first for bug fixes and for logic with clear inputs and outputs, alongside for wiring and UI.
    - Implement.
-   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check.
+   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, and the plan's performance measurement if the commit touches the measured code. Over budget means the phase is not done.
    - Review your own diff against the checklist below.
    - Stage and commit following `git.md`. The pre-commit hook runs the style check and blocks the commit on any error: fix the cause and commit again. Where no hook could be installed, run `check_diff.py` yourself before committing.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
@@ -105,7 +105,7 @@ After the last phase:
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
 6. Set the plan's `Status` to `complete`.
-7. Report: what was run and what it produced, what the reviewer found and what was done about it, what is done and what is not, and the weakest point in the result with the condition under which it breaks.
+7. Report: what was run and what it produced, including each measured figure against its budget, what the reviewer found and what was done about it, what is done and what is not, and the weakest point in the result with the condition under which it breaks.
 
 ## Self-review checklist
 

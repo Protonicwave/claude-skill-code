@@ -45,6 +45,12 @@ For every input, decide the behaviour for: empty, single item, duplicates, out o
 
 Choose the right complexity up front: no query per row in a loop, no loading unbounded data into memory, stream or paginate anything whose size you do not control, use the right data structure for lookups. Beyond that, measure before optimising. Clear code at the right complexity class beats clever code.
 
+When the task states a time, memory or query budget, or exists to make something faster, the budget is a requirement like any other; for a speed-up with no stated figure, set one and say so. A task with neither gets no budget and no timing script: a refactor or bug fix keeps the complexity it had.
+
+- Write it down with the input size it applies to: "one lookup under 20 µs with the full ranges file loaded", not "fast".
+- Commit a script or test that measures it on that input and prints the figure next to the budget, so the next change can rerun it. Time a fresh process over many repetitions and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless the margin is several times the budget.
+- Run it before each commit that touches the measured code, and report the measured figure, not "within budget".
+
 ## Naming
 
 - Precise and descriptive. A name says what the thing is or does in the domain's vocabulary.
