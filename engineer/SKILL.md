@@ -22,7 +22,7 @@ Read these when the step below says to, not up front.
 Before any other action in a repository:
 
 1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
-2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
+2. Identify the commands for install, test, lint, type-check, dead-code check and build, plus any coverage or timing command the README gives for particular modules: a change touching those modules runs it too. If one of the six cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
    - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
