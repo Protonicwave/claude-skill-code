@@ -63,6 +63,7 @@ Open it with `gh pr create --base <base> --title "<title>" --body-file <path>`. 
 Never do these without an explicit instruction from the user in the current session:
 
 - Force push, or amend or rewrite anything already pushed.
+- Skip hooks with `--no-verify`. A blocked commit means something needs fixing.
 - Delete branches or tags.
 - Resolve a merge conflict by discarding one side.
 - Run migrations against anything other than a local database.

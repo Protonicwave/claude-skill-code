@@ -8,7 +8,7 @@ A Claude Code skill, `engineer`, for writing production-quality code: plan first
 - Anything larger gets a plan in `.plans/`, approved once, then built in phases. Each phase ends with the full suite, linter and type-checker passing and a real commit.
 - Plans are listed in `.git/info/exclude`, so they never reach the repository and no `.gitignore` entry is needed.
 - Over-building is caught in three places: the plan names a caller for every new piece, complexity and dead-code linters fail the build, and a fresh subagent reviews the branch diff before the pull request.
-- `engineer/scripts/check_diff.py` flags em dashes, emoji, tool attribution, plan references and US spellings in staged changes, commit ranges or a single file.
+- `engineer/scripts/check_diff.py` flags em dashes, emoji, tool attribution, plan references and US spellings in staged changes, commit ranges or a single file. The skill installs it as a local pre-commit hook, so an offending commit is blocked.
 
 ## Layout
 
@@ -32,9 +32,29 @@ macOS or Linux:
 ln -s "$PWD/engineer" ~/.claude/skills/engineer
 ```
 
+Then make every session in a git repository load it, by adding a SessionStart hook to `~/.claude/settings.json` (use `python3` where `python` is not Python 3):
+
+```json
+"hooks": {
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python \"<home>/.claude/skills/engineer/scripts/session_start.py\"",
+          "timeout": 10
+        }
+      ]
+    }
+  ]
+}
+```
+
+The hook runs on startup, resume, clear and compaction. Inside a git repository it tells Claude to load the skill before changing any file. Outside one it prints nothing. It points at the skill rather than containing it, because Claude Code truncates hook context at about 2 KB.
+
 ## Use
 
-Claude picks the skill up on coding requests. Type `/engineer` to force it, or to continue a planned task in a new chat.
+With the hook installed, the skill loads on its own in any repository. Type `/engineer` to continue a planned task in a new chat.
 
 ```sh
 python engineer/scripts/check_diff.py               # staged changes

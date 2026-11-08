@@ -24,8 +24,19 @@ Before any other action in a repository:
 1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
 2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
+4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
+   - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
+   - Install the style check as a pre-commit hook, so no commit can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, or a `pre-commit` hook exists without the marker line below, leave it alone: the repository manages its own hooks, and you run the check by hand before each commit instead. Otherwise write `pre-commit` there and make it executable:
 
-If the directory is not a git repository and the task is a new project, run `git init -b main`.
+     ```sh
+     #!/bin/sh
+     # engineer-style-check
+     exec <python> "<absolute skill-dir>/scripts/check_diff.py"
+     ```
+
+     `<python>` is whichever of `python3` or `python` runs Python 3.12 or later in this shell. Skip the hook in the repository that holds this skill: its files have to mention plans and attribution.
+
+If the directory is not a git repository and the task is a new project, run `git init -b main` first.
 
 ## Choose the track
 
@@ -37,12 +48,11 @@ If `.plans/` already holds a plan with unticked phases for the current branch, t
 
 ## Plan
 
-1. Make sure the plan stays local. Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. This keeps plans out of git without adding a line to `.gitignore`, so the repository shows no trace of them.
-2. Read only the code the task touches. Use search to locate it before opening whole files.
-3. Settle ambiguities. Anything recoverable from the repository or a sensible default, decide and record in the plan. Ask only about decisions that are genuinely the user's.
-4. If the request is wrong, under-specified, or will not survive its obvious next variation, say so now and propose the alternative.
-5. Write `.plans/<task-slug>.md` from `references/plan-template.md`. Keep it under about 150 lines: it is a working document, not an essay.
-6. Stop. Give the user a five-line summary (goal, shape, phase list, chat boundary, anything you need from them) and the plan path. Wait for approval. Fixing direction here is cheap; after code exists it is not.
+1. Read only the code the task touches. Use search to locate it before opening whole files.
+2. Settle ambiguities. Anything recoverable from the repository or a sensible default, decide and record in the plan. Ask only about decisions that are genuinely the user's.
+3. If the request is wrong, under-specified, or will not survive its obvious next variation, say so now and propose the alternative.
+4. Write `.plans/<task-slug>.md` from `references/plan-template.md`. Keep it under about 150 lines: it is a working document, not an essay.
+5. Stop. Give the user a five-line summary (goal, shape, phase list, chat boundary, anything you need from them) and the plan path. Wait for approval. Fixing direction here is cheap; after code exists it is not.
 
 ### Sizing phases
 
@@ -68,7 +78,7 @@ Set it in the plan:
    - Implement.
    - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check.
    - Review your own diff against the checklist below.
-   - Stage, run `python <skill-dir>/scripts/check_diff.py`, fix anything it reports, then commit following `git.md`.
+   - Stage and commit following `git.md`. The pre-commit hook runs the style check and blocks the commit on any error: fix the cause and commit again. Where no hook could be installed, run `check_diff.py` yourself before committing.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
 7. Continue:
    - **Single chat**: go straight to the next phase without asking.
@@ -81,7 +91,15 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 After the last phase:
 
 1. Run every check on the whole branch and show what each produced.
-2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge. Verify each finding yourself, fix the real ones as separate commits, and note any you reject with the reason.
+2. Get an independent review. Spawn one fresh subagent and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), any defect, and any unhandled edge.
+
+   Settle every finding with evidence, not opinion, because the author is the person least able to judge their own code:
+
+   - **Over-built**: delete or inline the piece and run the suite. Green with no requirement lost: the piece goes. Green but a requirement is lost: the piece stays, and the missing test that should have caught its removal is the real defect, so add it. Either way the finding produces a change.
+   - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
+   - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
+
+   Commit each fix separately.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
