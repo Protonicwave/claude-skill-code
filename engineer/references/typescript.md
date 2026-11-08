@@ -47,8 +47,18 @@ Follow the repository's existing tooling. The defaults below are for new project
 ## Async and I/O
 
 - Every `fetch` gets a timeout: `signal: AbortSignal.timeout(ms)`.
-- `Promise.all` for independent work. Bounded concurrency when mapping over a list whose size you do not control.
+- `Promise.all` for independent work, not `await` in a loop, which runs them one after another. Keep the loop where order matters, and bound the concurrency when mapping over a list whose size you do not control.
 - Check `response.ok` before reading the body.
+
+## Performance
+
+Traps that change the complexity class or stall a server:
+
+- `array.includes` or `indexOf` inside a loop scans the array every time. Build a `Set` once: `has` is sublinear on average by specification.
+- `array.shift()` moves every remaining element. For a queue, keep a head index into the array instead.
+- In Node.js, every request callback shares one event loop, so work that grows with client input delays every other client. Reason about each handler's complexity in terms of the input the client controls.
+- The synchronous APIs (`readFileSync`, `execSync`, `zlib` and `crypto` `*Sync` calls) are for scripts, never a request path.
+- `JSON.parse` and `JSON.stringify` are linear but slow on large input. Cap the size of a client's body before parsing it.
 
 ## Idiom
 
@@ -64,6 +74,7 @@ Follow the repository's existing tooling. The defaults below are for new project
 - `it.each` for edge-case tables.
 - Fake timers and the network only at the boundary. Do not mock internal modules.
 - Commands: the scripts in `package.json`. For new projects, define `test`, `lint`, `typecheck` (`tsc --noEmit`) and `build`.
+- Coverage of critical modules with Vitest and `@vitest/coverage-v8`: `vitest run --coverage --coverage.include=<paths> --coverage.thresholds.100`. Exclude code with `/* v8 ignore next -- @preserve */` and a comment giving the reason: without `@preserve`, esbuild strips the hint when it compiles TypeScript.
 
 ## .gitignore for new projects
 

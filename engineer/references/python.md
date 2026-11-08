@@ -62,12 +62,25 @@ Follow the repository's existing tooling. The defaults below are for new project
 - Absolute imports. No wildcard imports. No import-time side effects beyond defining things.
 - Constants in `UPPER_SNAKE_CASE` at module top, with units in the name.
 
+## Performance
+
+Traps that change the complexity class or grow without bound, each documented CPython behaviour:
+
+- `x in some_list` inside a loop scans the list every time. Build a `set` or `dict` once: lookups take constant time on average.
+- `list.pop(0)` and `list.insert(0, x)` move every element. Use `collections.deque` for a queue.
+- `+=` on a `str` or `bytes` in a loop is quadratic in the total length. Append the pieces to a list and `"".join` them once.
+- Range and nearest-value lookups over sorted data: `bisect` on a sorted list of boundaries, O(log n). `insort` is still O(n) per insertion, so load everything and sort once rather than inserting items one by one.
+- `functools.cache` and `lru_cache(maxsize=None)` grow without bound. A cache keyed on external input gets an explicit `maxsize`.
+
+To compare two implementations, use `timeit.repeat` and take the minimum: higher readings come from other processes, not from the code.
+
 ## Tests
 
 - Plain `assert` with pytest's rewriting.
 - `@pytest.mark.parametrize` for edge-case tables.
 - `tmp_path` for filesystem tests and `monkeypatch` for environment and clock. Do not patch internal functions.
 - Commands: `pytest`, `ruff check .`, `ruff format --check .`, `mypy .` unless the repository says otherwise.
+- Coverage of critical modules: `coverage run --branch --source=<package> -m pytest`, then `coverage report --show-missing --fail-under=100 --include=<paths>`. Without `--source`, a critical module no test imports is left out of the report and the check passes. If the repository already uses pytest-cov, run `pytest --cov=<package> --cov-branch` and the same `coverage report`. Exclude a line with `# pragma: no cover: <reason>`, or a branch that cannot be taken with `# pragma: no branch: <reason>`. A repository that sets `exclude_lines` replaces the default pragma; add patterns with `exclude_also` instead.
 
 ## .gitignore for new projects
 

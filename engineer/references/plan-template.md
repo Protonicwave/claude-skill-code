@@ -36,6 +36,17 @@ New pieces, each with the existing or planned code that calls it:
 
 Anything without a caller is cut before approval. This list is where over-building shows up while it is still cheap to remove.
 
+## Performance
+
+- Budget: <time, memory or query count> for <operation>, with <input size>.
+- Measured by: <committed script or test>, run as <command>.
+- Baseline: <figure before the change, if the code exists>.
+
+## Critical modules
+
+- <path>: <why a defect here is costly>.
+- Checked by: <coverage command limited to these paths>.
+
 ## Decisions
 
 - <Decision>. Why. Alternative rejected and why.
