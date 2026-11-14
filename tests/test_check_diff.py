@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import check_diff
-from conftest import git
+from git_command import git
 
 EM_DASH = "\u2014"
 EN_DASH = "\u2013"

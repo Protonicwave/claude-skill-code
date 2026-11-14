@@ -1,20 +1,10 @@
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pytest
 
-
-def git(repo: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", "-C", str(repo), *args],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=True,
-    )
-    return result.stdout
+from git_command import git
 
 
 @pytest.fixture
