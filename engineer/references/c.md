@@ -16,15 +16,19 @@ Follow the repository's existing tooling. The defaults below are for new project
 
   `-Wextra` adds to `-Wall` rather than replacing it. `-Wnull-dereference` is only active when optimisation is on, so an `-O0` build reports nothing for it.
 
-- clang-tidy, with findings as errors. It cannot turn on compiler warnings the build does not, so pass the same flags after `--`:
+- clang-tidy, configured in `.clang-tidy` at the repository root:
 
-  ```sh
-  clang-tidy -quiet \
-    -checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,readability-function-cognitive-complexity,readability-function-size' \
-    -warnings-as-errors='*' src/*.c -- -std=c17 -Wall -Wextra
+  ```yaml
+  Checks: '-*,clang-diagnostic-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,readability-function-cognitive-complexity,readability-function-size'
+  WarningsAsErrors: '*'
+  CheckOptions:
+    readability-function-cognitive-complexity.Threshold: 15
+    readability-function-size.LineThreshold: 60
   ```
 
-  `cert-*` holds the security checks; `clang-analyzer-*` adds path-sensitive checks such as null dereference. The two `readability-` checks are the complexity limits, review aids as `standards.md` describes.
+  `clang-diagnostic-*` keeps the compiler's own warnings: without it, `-*` turns them off and the `-W` flags report nothing. `cert-*` holds the security checks; `clang-analyzer-*` adds path-sensitive checks such as null dereference. The two `readability-` checks are the complexity limits, review aids as `standards.md` describes; left at their defaults, cognitive complexity 25 and 800 statements, they never fire on ordinary code.
+
+  Run it with `clang-tidy -quiet -p <build directory> src/*.c` where the build writes `compile_commands.json`, so it sees the real flags. Without one, give the warning flags above after `--`, which also tells clang-tidy to ignore any compilation database: `clang-tidy -quiet src/*.c -- <warning flags>`.
 
 - cppcheck as the dead-code check. `unusedFunction` needs the whole program in one run, so give it the source tree, never one file at a time. Without `--error-exitcode` it exits 0 whatever it finds:
 
@@ -32,7 +36,7 @@ Follow the repository's existing tooling. The defaults below are for new project
   cppcheck -q --enable=warning,style,performance,portability,unusedFunction --error-exitcode=1 src
   ```
 
-- There is no dependency audit command for C. When a change adds or upgrades a vendored or package-managed library, say in the report and the pull request that it was not audited, and name the library and its version.
+- There is no dependency audit command for C. OSV-Scanner reads `conan.lock`, but it holds no ConanCenter advisories for common libraries and passed a lock pinning zlib 1.2.11, so it is not a gate here. When a change adds or upgrades a vendored or package-managed library, say in the report and the pull request that it was not audited, and name the library and its version.
 
 ## Types
 
