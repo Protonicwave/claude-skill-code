@@ -26,7 +26,7 @@ Before any other action in a repository:
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
    - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
-   - Install the style check as a pre-commit hook, so no commit can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, or a `pre-commit` hook exists without the marker line below, leave it alone: the repository manages its own hooks, and you run the check by hand before each commit instead. Otherwise write `pre-commit` there and make it executable:
+   - Install the style check as `pre-commit` and `commit-msg` hooks, so no change or commit message can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, leave both alone: the repository manages its own hooks, and you run the checks by hand instead. Otherwise write each hook that does not already exist, or that exists with the marker line below, and make it executable. Leave a hook without the marker alone and run its check by hand.
 
      ```sh
      #!/bin/sh
@@ -34,7 +34,13 @@ Before any other action in a repository:
      exec <python> "<absolute skill-dir>/scripts/check_diff.py"
      ```
 
-     `<python>` is whichever of `python3` or `python` runs Python 3.12 or later in this shell. Skip the hook in the repository that holds this skill: its files have to mention plans and attribution.
+     ```sh
+     #!/bin/sh
+     # engineer-style-check
+     exec <python> "<absolute skill-dir>/scripts/check_diff.py" --commit-msg "$1"
+     ```
+
+     `<python>` is whichever of `python3` or `python` runs Python 3.12 or later in this shell. Skip the hooks in the repository that holds this skill: its files have to mention plans and attribution.
 
 If the directory is not a git repository and the task is a new project, run `git init -b main` first.
 
@@ -78,7 +84,7 @@ Set it in the plan:
    - Implement.
    - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, plus the plan's coverage check if the commit touches a critical module and its performance measurement if it touches the measured code. A critical module below full coverage, or a measurement over budget, means the phase is not done.
    - Review your own diff against the checklist below.
-   - Stage and commit following `git.md`. The pre-commit hook runs the style check and blocks the commit on any error: fix the cause and commit again. Where no hook could be installed, run `check_diff.py` yourself before committing.
+   - Stage and commit following `git.md`. The hooks run the style check on the staged diff and on the message, and block the commit on any error: fix the cause and commit again. Where a hook could not be installed, run its check yourself: `check_diff.py` before committing, and `check_diff.py --commit-msg <file>` on the message, written to a scratch file first.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
 7. Continue:
    - **Single chat**: go straight to the next phase without asking.

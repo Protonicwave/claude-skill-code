@@ -4,6 +4,8 @@ Usage:
     check_diff.py                 staged changes (git diff --cached)
     check_diff.py <base>..HEAD    a commit range, including its commit messages
     check_diff.py --file <path>   a single text file, such as a pull request body
+    check_diff.py --commit-msg <path>
+                                  a commit message file, as a commit-msg hook passes it
 
 Exits 1 if any error is found. Warnings need judgement: an identifier that
 mirrors an external interface keeps its spelling, for example.
@@ -57,6 +59,7 @@ WARNING_PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 MAX_FINDINGS_SHOWN = 200
+SCISSORS_LINE = "# ------------------------ >8 ------------------------"
 
 
 def run_git(*args: str) -> str:
@@ -111,6 +114,19 @@ def file_lines(path: Path) -> Iterator[tuple[str, str]]:
         yield f"{path}:{number}", text
 
 
+def commit_message_file_lines(path: Path) -> Iterator[tuple[str, str]]:
+    """Yield the lines of a message file that git records in the commit.
+
+    Git drops lines starting with "#" and, under `commit --verbose`, everything
+    from the scissors line down. Only the default comment character is handled.
+    """
+    for location, text in file_lines(path):
+        if text == SCISSORS_LINE:
+            return
+        if not text.startswith("#"):
+            yield location, text
+
+
 def scan(lines: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -131,12 +147,15 @@ def collect(argv: list[str]) -> Iterator[tuple[str, str]]:
             yield from added_lines(run_git("diff", "--cached", "--no-color"))
         case ["--file", path]:
             yield from file_lines(Path(path))
+        case ["--commit-msg", path]:
+            yield from commit_message_file_lines(Path(path))
         case [revision_range] if ".." in revision_range:
             yield from added_lines(run_git("diff", "--no-color", revision_range))
             yield from commit_message_lines(revision_range)
         case _:
             raise SystemExit(
-                f"expected no arguments, '<base>..HEAD' or '--file <path>', got {argv}"
+                "expected no arguments, '<base>..HEAD', '--file <path>' or "
+                f"'--commit-msg <path>', got {argv}"
             )
 
 

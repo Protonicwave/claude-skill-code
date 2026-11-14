@@ -204,3 +204,36 @@ def test_commit_range_checks_added_lines_and_commit_messages(
     out = capsys.readouterr().out
     assert "notes.txt:1: em or en dash" in out
     assert re.search(r"commit [0-9a-f]+ line 3: tool attribution: Co-Authored-By", out)
+
+
+def check_message(tmp_path: Path, message: str) -> int:
+    path = tmp_path / "COMMIT_EDITMSG"
+    write(path, message)
+    return check_diff.main(["--commit-msg", str(path)])
+
+
+def test_commit_message_with_attribution_trailer_fails(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert check_message(tmp_path, "feat: add export\n\nCo-Authored-By: someone\n") == 1
+    assert "COMMIT_EDITMSG:3: tool attribution: Co-Authored-By" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "fix: x",
+        "",
+        "fix: x\n\n# Please enter the commit message. As per the plan, \N{ROCKET}\n",
+        "fix: x\n"
+        "# ------------------------ >8 ------------------------\n"
+        "diff --git a/notes.txt b/notes.txt\n"
+        "-old \N{EM DASH} line\n",
+    ],
+    ids=["subject only", "empty", "comment lines", "verbose diff below scissors"],
+)
+def test_commit_message_checks_only_what_git_records(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], message: str
+) -> None:
+    assert check_message(tmp_path, message) == 0
+    assert capsys.readouterr().out == "Clean.\n"
