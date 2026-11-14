@@ -12,7 +12,7 @@ The goal is code a strong senior engineer would sign off: correct first, then si
 Read these when the step below says to, not up front.
 
 - `references/standards.md`: design, correctness, errors, naming, comments, tests, security, repository hygiene. Read before writing any code.
-- `references/<language>.md`: read the file for each language the change touches: `python.md`, `typescript.md`, `c.md` or `cpp.md`. For any other language, `standards.md` alone applies.
+- `references/<language>.md`: read the file for each language the change touches: `python.md`, `typescript.md`, `c.md`, `cpp.md`, `rust.md` or `go.md`. For any other language, `standards.md` alone applies.
 - `references/plan-template.md`: read when writing a plan.
 - `references/git.md`: read before the first commit of the session and before writing a pull request.
 - `scripts/check_diff.py`: mechanical checks for dashes, US spellings, emoji, plan and AI references. Run it as described below.
@@ -21,7 +21,7 @@ Read these when the step below says to, not up front.
 
 Before any other action in a repository:
 
-1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, `CMakeLists.txt`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
+1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, `Cargo.toml`, `go.mod`, `CMakeLists.txt`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
 2. Identify the commands for install, test, lint, type-check, dead-code check, dependency audit and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
