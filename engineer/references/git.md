@@ -66,7 +66,7 @@ Never do these without an explicit instruction from the user in the current sess
 - Skip hooks with `--no-verify`. A blocked commit means something needs fixing.
 - Delete branches or tags.
 - Resolve a merge conflict by discarding one side.
-- Run migrations against anything other than a local database.
+- Run migrations, any statement that writes, or `EXPLAIN ANALYZE` against anything other than a local database. `EXPLAIN ANALYZE` executes the statement it explains, side effects included.
 - Touch secrets or credentials.
 - Edit generated files by hand.
 - Install tooling outside the repository.
