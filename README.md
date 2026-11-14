@@ -69,9 +69,10 @@ python engineer/scripts/check_diff.py --commit-msg .git/COMMIT_EDITMSG  # a comm
 
 ## Test
 
-Needs pytest, ruff, mypy, vulture and coverage.
+Install the pinned tools with pip 25.1 or later, then run the checks:
 
 ```sh
+python -m pip install --group dev
 python -m pytest -q
 python -m ruff check . && python -m ruff format --check .
 python -m mypy engineer/scripts tests
