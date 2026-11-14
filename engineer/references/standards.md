@@ -48,7 +48,7 @@ Choose the right complexity up front: no query per row in a loop, no loading unb
 When the task states a time, memory or query budget, or exists to make something faster, the budget is a requirement like any other; for a speed-up with no stated figure, set one in the plan and tell the user. A task with neither gets no budget and no timing script: a refactor or bug fix keeps the complexity it had.
 
 - Write it down with the input size it applies to: "one lookup under 20 µs with the full ranges file loaded", not "fast". For a speed-up, measure the existing code first and report both figures.
-- Commit a script or test that measures it on that input and prints the figure next to the budget, and give its command in the README, so a later change can find and rerun it. Start a fresh process, time many repetitions inside it, and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless its threshold is several times the budget.
+- Commit a script or test that measures it on that input, prints the figure next to the budget and exits non-zero when the figure is over it, and give its command in the README, so a later change can find and rerun it. Start a fresh process, time many repetitions inside it, and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless its threshold is several times the budget.
 - Run it before each commit that touches the measured code, and report the measured figure, not "within budget".
 
 ## Naming
@@ -82,7 +82,7 @@ When the task states a time, memory or query budget, or exists to make something
 
 A gate is a check that blocks a commit: the suite, linter, type-checker, dead-code check, coverage check, dependency audit or a performance measurement.
 
-- **Every gate can fail.** It exits non-zero on a finding. Nothing in its configuration reduces findings to output: no report-only mode, no threshold nothing can fall below, no option that passes when the tool cannot reach its service. When you add a gate or change its configuration, plant one finding it should catch, run it, see it fail, then remove the finding. A gate that has never failed is unproven.
+- **Every gate can fail.** It exits non-zero on a finding. Nothing in its configuration reduces findings to output: no report-only mode, no threshold set so low that nothing fails it, no option that passes when the tool cannot reach its service. When you add a gate or change its configuration, plant one finding it should catch, run it, see it fail, then remove the finding. A gate that has never failed is unproven.
 - **Dead code is looked for across the whole program.** A compiler warning for unused private members misses a public function nothing calls. Use the whole-program tool the language file names. Where it names none, search the repository for callers of each public name the diff adds.
 - **Coverage falls back where branches cannot be measured.** Where the toolchain reports only line or statement coverage, a critical module needs full line coverage plus a test for each outcome of every condition in it, listed in the plan's test list.
 
