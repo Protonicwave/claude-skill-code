@@ -21,15 +21,17 @@ from io import TextIOWrapper
 from pathlib import Path
 from typing import cast
 
-# Whole Unicode blocks rather than the emoji property, which re cannot match. The
-# BMP blocks also hold plain symbols such as check marks; the style bans those too.
+# Whole Unicode blocks rather than the emoji property, which re cannot match. Two
+# of the blocks also hold symbols that are not emoji, such as a check mark or a
+# sharp sign; flagging those is the price of missing no emoji in them.
 # U+FE0F requests emoji presentation, so it catches emoji built on any other base.
 EMOJI_CLASS = (
     "["
     "\U0001f000-\U0001faff"  # supplementary emoji blocks, flags included
     "\U00002600-\U000027bf"  # Miscellaneous Symbols and Dingbats
     "\U0000231a\U0000231b\U000023e9-\U000023fa"  # watch, hourglass, media controls
-    "\U00002b50-\U00002b55"  # stars and circles
+    "\U000025fd\U000025fe"  # medium small squares
+    "\U00002b1b\U00002b1c\U00002b50-\U00002b55"  # large squares, stars and circles
     "\U0000fe0f"  # variation selector 16
     "]"
 )

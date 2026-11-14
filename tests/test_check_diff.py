@@ -89,6 +89,10 @@ def test_dash_beside_a_range_or_spaced_out_is_an_error(
         "1\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
         "\N{BLACK RIGHT-POINTING TRIANGLE}\N{VARIATION SELECTOR-16}",
         "\N{WOMAN}\N{ZERO WIDTH JOINER}\N{PERSONAL COMPUTER}",
+        "\N{BLACK LARGE SQUARE}",
+        "\N{WHITE LARGE SQUARE}",
+        "\N{WHITE MEDIUM SMALL SQUARE}",
+        "\N{BLACK MEDIUM SMALL SQUARE}",
     ],
 )
 def test_emoji_fails_the_check(
