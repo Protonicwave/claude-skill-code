@@ -78,6 +78,14 @@ When the task states a time, memory or query budget, or exists to make something
 - A plan lists its critical modules, if it has any: those the task's correctness rests on, or where a defect loses money, data or access. Each has full line and branch coverage from the suite, checked before every commit that touches it. A line that needs no test, such as an entry point that only wires tested parts together, is excluded with the coverage tool's pragma and the reason on the same line. Coverage proves the code ran, not that the assertions are right: it finds untested code, it does not certify tested code.
 - The full suite passes before every commit. A test is never deleted, skipped or weakened to make the suite pass. A failure unrelated to the change is reported, not fixed in passing.
 
+## Gates
+
+A gate is a check that blocks a commit: the suite, linter, type-checker, dead-code check, coverage check, dependency audit or a performance measurement.
+
+- **Every gate can fail.** It exits non-zero on a finding. Nothing in its configuration reduces findings to output: no report-only mode, no threshold nothing can fall below, no option that passes when the tool cannot reach its service. When you add a gate or change its configuration, plant one finding it should catch, run it, see it fail, then remove the finding. A gate that has never failed is unproven.
+- **Dead code is looked for across the whole program.** A compiler warning for unused private members misses a public function nothing calls. Use the whole-program tool the language file names. Where it names none, search the repository for callers of each public name the diff adds.
+- **Coverage falls back where branches cannot be measured.** Where the toolchain reports only line or statement coverage, a critical module needs full line coverage plus a test for each outcome of every condition in it, listed in the plan's test list.
+
 ## Security
 
 - Untrusted input is validated at the boundary (see Correctness).
