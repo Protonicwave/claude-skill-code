@@ -16,7 +16,7 @@ A Claude Code skill, `engineer`, for writing production-quality code: plan first
 ## Layout
 
 - `engineer/SKILL.md`: the workflow and the self-review checklist.
-- `engineer/references/`: standards, language rules (Python, TypeScript), the plan template and git conventions. Loaded only when a step needs them.
+- `engineer/references/`: standards, the plan template, git conventions, and one file per language: Python, TypeScript, C, C++, Rust, Go, Java, C#, shell and SQL. Each language file leads with the commands that fail the build: linter, type or analyser checks, dead code, dependency audit and coverage. Every command in them was run once on a small project, passing when clean and failing on a planted finding. Loaded only when a step needs them.
 - `engineer/scripts/check_diff.py`: the style checker. Standard library only, Python 3.12 or later.
 - `tests/`: pytest tests for both scripts. `pyproject.toml` holds the tool configuration only.
 
