@@ -69,7 +69,7 @@ Traps that change the complexity class, each from the standard library documenta
   cargo llvm-cov --fail-under-lines 100 --fail-under-regions 100 --ignore-filename-regex '<files outside the critical modules>'
   ```
 
-  Both floors apply to the total, so the regex must exclude every file that is not critical.
+  Both floors apply to the total, so the regex must exclude every file that is not critical. cargo llvm-cov has no include filter, and a lookahead such as `(?!...)` silently matches nothing, so the regex lists the other files. A file added later counts towards the total and fails the gate until the regex names it or the tests cover it.
 
 ## .gitignore for new projects
 
