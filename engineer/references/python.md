@@ -26,7 +26,10 @@ Follow the repository's existing tooling. The defaults below are for new project
 
   `C90` and `PLR` turn over-built code into lint failures: too many branches, arguments, returns or statements in one function. Treat a failure as a design signal and restructure, rather than raising the limit.
 
+  `S` is flake8-bandit's security rules: shell calls, SQL built from strings, hard-coded passwords. It is the security scanner, so it stays in `select`.
+
 - Vulture (`vulture src --min-confidence 80`) before each commit, to catch functions, classes and variables nothing calls. Ruff only finds unused imports and locals.
+- pip-audit for the dependency audit: `pip-audit .` for a project declared in `pyproject.toml`, `pip-audit -r requirements.txt` for a requirements file. It exits 1 on any known vulnerability. It reads `pyproject.toml` and `pylock.*.toml`, not `uv.lock` or `poetry.lock`.
 - mypy with `strict = true`, or pyright in strict mode if the repository uses it.
 - pytest. Tests live in `tests/`, mirroring the package layout.
 - `src/` layout for anything that will be installed or imported by other code.

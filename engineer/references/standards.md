@@ -93,6 +93,8 @@ A gate is a check that blocks a commit: the suite, linter, type-checker, dead-co
 - Least privilege for anything created: tokens, roles, file permissions, container users.
 - Secrets never appear in code, logs, error messages or test fixtures.
 - A change touching authentication, cryptography, permissions or sessions states the threat it defends against before it is written.
+- The linter's security rules are on, as the language file names them. Review alone does not catch insecure generated code: in one study about 40% of 1,689 generated programs were vulnerable.
+- The dependency audit is a gate. Run the language file's audit command before every commit that changes a manifest or lock file, and before opening a pull request. Fix a finding by upgrading. When no fixed version exists, or the vulnerable code is unreachable from this project, ignore that one advisory by its identifier in the tool's configuration with the reason beside it, and say so in the pull request. Never lower the severity level or skip the audit to get past a finding.
 
 ## Dependencies
 

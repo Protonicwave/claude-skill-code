@@ -22,7 +22,7 @@ Read these when the step below says to, not up front.
 Before any other action in a repository:
 
 1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
-2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
+2. Identify the commands for install, test, lint, type-check, dead-code check, dependency audit and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
    - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
@@ -82,7 +82,7 @@ Set it in the plan:
 5. Do the next unticked phase:
    - Write tests as the plan's test list specifies: first for bug fixes and for logic with clear inputs and outputs, alongside for wiring and UI.
    - Implement.
-   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, plus the plan's coverage check if the commit touches a critical module and its performance measurement if it touches the measured code. A critical module below full coverage, or a measurement over budget, means the phase is not done.
+   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, plus the dependency audit if the commit changes a manifest or lock file, the plan's coverage check if the commit touches a critical module and its performance measurement if it touches the measured code. A critical module below full coverage, or a measurement over budget, means the phase is not done.
    - Review your own diff against the checklist below.
    - Stage and commit following `git.md`. The hooks run the style check on the staged diff and on the message, and block the commit on any error: fix the cause and commit again. Where a hook could not be installed, run its check yourself: `check_diff.py` before committing, and `check_diff.py --commit-msg <file>` on the message, written to a scratch file first.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
@@ -123,6 +123,7 @@ Run through this on every diff before committing. Each item is a common way gene
 - An ignored return value, error or promise.
 - A loop, collection, retry, queue or network call without an explicit bound or timeout.
 - Validation repeated downstream of the boundary that already did it.
+- Untrusted input reaching a query, shell command, file path or template without validation or parameters, or a secret in code, a log or a fixture.
 - A comment that restates the code, or mentions the plan, phases, the task or an assistant.
 - A name that is vague (`data`, `info`, `handle`, `manager`, `util`, `helper`) or in US spelling.
 - Formatting, renames or upgrades unrelated to the task.
