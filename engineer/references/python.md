@@ -24,7 +24,7 @@ Follow the repository's existing tooling. The defaults below are for new project
   "tests/**" = ["S101", "PLR2004"]
   ```
 
-  `C90` and `PLR` turn over-built code into lint failures: too many branches, arguments, returns or statements in one function. Treat a failure as a design signal and restructure, rather than raising the limit.
+  `C90` and `PLR` fail a function with too many branches, arguments, returns or statements. They are review aids, as `standards.md` describes: restructure rather than raise the limit.
 
   `S` is flake8-bandit's security rules: shell calls, SQL built from strings, hard-coded passwords. It is the security scanner, so it stays in `select`.
 

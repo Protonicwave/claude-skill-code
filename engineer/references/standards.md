@@ -24,7 +24,7 @@ Several rules here come from NASA JPL's "Power of 10" and TigerBeetle's "TigerSt
 - **Make illegal states unrepresentable.** Use the type system: enums or literal unions for closed sets, distinct types for identifiers, discriminated unions for states, non-optional fields where a value is always present.
 - **Validate once, at the boundary.** Anything from outside the process (HTTP, files, environment, CLI arguments, rows other systems write) is parsed into a trusted type at entry. Inward code trusts the type and does not re-check.
 - **Assert invariants.** Where a condition can only be false because of a bug, assert it, so the bug surfaces where it happens rather than three calls later. Assertions are for programmer errors, never for validating input or for control flow.
-- **Short functions, one level of abstraction.** A function should fit on one screen, roughly 60 lines. Nesting deeper than three levels is a sign to extract or return early.
+- **Short functions, one level of abstraction.** A function should fit on one screen, roughly 60 lines. Nesting deeper than three levels is a sign to extract or return early. These limits, and the linter's complexity limits, are review aids: they mark code a reader cannot follow in one pass. The evidence that they prevent defects is weak, so restructure for the reader's sake, and suppress a single finding, with the reason, only where splitting would be harder to read, such as a flat lookup table.
 - **Smallest scope.** Declare variables where they are used. No mutable module-level state.
 - **Strictest checks the repository tolerates.** Type-checker and linter at their strictest practical settings, warnings treated as errors. No suppression without a comment stating why the checker is wrong in that instance.
 
