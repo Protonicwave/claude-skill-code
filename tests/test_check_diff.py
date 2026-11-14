@@ -228,16 +228,38 @@ def test_commit_message_with_attribution_trailer_fails(
     [
         "fix: x",
         "",
-        "fix: x\n\n# Please enter the commit message. As per the plan, \N{ROCKET}\n",
         "fix: x\n"
         "# ------------------------ >8 ------------------------\n"
         "diff --git a/notes.txt b/notes.txt\n"
         "-old \N{EM DASH} line\n",
+        "fix: x\n; ------------------------ >8 ------------------------\n-old \N{EM DASH} line\n",
     ],
-    ids=["subject only", "empty", "comment lines", "verbose diff below scissors"],
+    ids=["subject only", "empty", "verbose diff below scissors", "other comment character"],
 )
 def test_commit_message_checks_only_what_git_records(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], message: str
 ) -> None:
     assert check_message(tmp_path, message) == 0
     assert capsys.readouterr().out == "Clean.\n"
+
+
+def test_commit_message_checks_comment_lines(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # git commit -m and -F record "#" lines; only a message written in the editor loses them.
+    assert check_message(tmp_path, "fix: x\n\n# as per the plan\n") == 1
+    assert "COMMIT_EDITMSG:3: plan reference: # as per the plan" in capsys.readouterr().out
+
+
+def test_unreadable_file_names_the_path(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit, match=r"cannot read .*absent\.md"):
+        check_diff.main(["--file", str(tmp_path / "absent.md")])
+
+
+def test_undecodable_bytes_do_not_stop_the_check(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "COMMIT_EDITMSG"
+    path.write_bytes(b"fix: caf\xe9 \xe2\x80\x94 menu\n")
+    assert check_diff.main(["--commit-msg", str(path)]) == 1
+    assert "COMMIT_EDITMSG:1: em or en dash" in capsys.readouterr().out

@@ -61,7 +61,7 @@ WARNING_PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 MAX_FINDINGS_SHOWN = 200
-SCISSORS_LINE = "# ------------------------ >8 ------------------------"
+SCISSORS_LINE = re.compile(r"\S -{24} >8 -{24}")
 
 
 def run_git(*args: str) -> str:
@@ -112,21 +112,28 @@ def commit_message_lines(revision_range: str) -> Iterator[tuple[str, str]]:
 
 
 def file_lines(path: Path) -> Iterator[tuple[str, str]]:
-    for number, text in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        yield f"{path}:{number}", text
+    try:
+        # A message in another i18n.commitEncoding is still checked, with the
+        # undecodable bytes shown as U+FFFD.
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        raise SystemExit(f"cannot read {path}: {error.strerror}") from error
+    for number, line in enumerate(text.splitlines(), start=1):
+        yield f"{path}:{number}", line
 
 
 def commit_message_file_lines(path: Path) -> Iterator[tuple[str, str]]:
-    """Yield the lines of a message file that git records in the commit.
+    """Yield the lines of a message file up to the scissors line.
 
-    Git drops lines starting with "#" and, under `commit --verbose`, everything
-    from the scissors line down. Only the default comment character is handled.
+    Comment lines are checked too: git keeps them when the message comes from
+    `-m` or `-F`, and strips them only from a message written in the editor.
+    Under `commit --verbose`, git drops everything from the scissors line down,
+    whatever the comment character.
     """
     for location, text in file_lines(path):
-        if text == SCISSORS_LINE:
+        if SCISSORS_LINE.fullmatch(text):
             return
-        if not text.startswith("#"):
-            yield location, text
+        yield location, text
 
 
 def scan(lines: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
