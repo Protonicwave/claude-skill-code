@@ -4,6 +4,8 @@ Usage:
     check_diff.py                 staged changes (git diff --cached)
     check_diff.py <base>..HEAD    a commit range, including its commit messages
     check_diff.py --file <path>   a single text file, such as a pull request body
+    check_diff.py --commit-msg <path>
+                                  a commit message file, as a commit-msg hook passes it
 
 Exits 1 if any error is found. Warnings need judgement: an identifier that
 mirrors an external interface keeps its spelling, for example.
@@ -15,18 +17,37 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable, Iterator
+from io import TextIOWrapper
 from pathlib import Path
+from typing import cast
+
+# Whole Unicode blocks rather than the emoji property, which re cannot match. Two
+# of the blocks also hold symbols that are not emoji, such as a check mark or a
+# sharp sign; flagging those is the price of missing no emoji in them.
+# U+FE0F requests emoji presentation, so it catches emoji built on any other base.
+EMOJI_CLASS = (
+    "["
+    "\U0001f000-\U0001faff"  # supplementary emoji blocks, flags included
+    "\U00002600-\U000027bf"  # Miscellaneous Symbols and Dingbats
+    "\U0000231a\U0000231b\U000023e9-\U000023fa"  # watch, hourglass, media controls
+    "\U000025fd\U000025fe"  # medium small squares
+    "\U00002b1b\U00002b1c\U00002b50-\U00002b55"  # large squares, stars and circles
+    "\U0000fe0f"  # variation selector 16
+    "]"
+)
 
 ERROR_PATTERNS: dict[str, re.Pattern[str]] = {
-    "em or en dash": re.compile("[\u2014\u2013]"),
+    # An en dash between two digits is a range, not punctuation: a warning instead.
+    "em or en dash": re.compile(r"\N{EM DASH}|(?<!\d)\N{EN DASH}|\N{EN DASH}(?!\d)"),
     "tool attribution": re.compile(r"co-authored-by|generated (with|by) ", re.IGNORECASE),
     "plan reference": re.compile(r"\.plans/|implementation plan|as per (the )?plan", re.IGNORECASE),
-    "emoji": re.compile("[\U0001f300-\U0001faff]"),
+    "emoji": re.compile(EMOJI_CLASS),
 }
 
 # Warnings, not errors: each can be legitimate (an app that calls the Anthropic
 # API, a three-phase power model, CSS `color`), so a human judges them.
 WARNING_PATTERNS: dict[str, re.Pattern[str]] = {
+    "en dash in a numeric range": re.compile(r"\d\N{EN DASH}\d"),
     "assistant name": re.compile(r"\b(claude|anthropic|chatgpt|copilot)\b", re.IGNORECASE),
     "possible plan reference": re.compile(r"\bphase \d", re.IGNORECASE),
     "US spelling": re.compile(
@@ -40,6 +61,7 @@ WARNING_PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 MAX_FINDINGS_SHOWN = 200
+SCISSORS_LINE = re.compile(r"\S -{24} >8 -{24}")
 
 
 def run_git(*args: str) -> str:
@@ -90,8 +112,28 @@ def commit_message_lines(revision_range: str) -> Iterator[tuple[str, str]]:
 
 
 def file_lines(path: Path) -> Iterator[tuple[str, str]]:
-    for number, text in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        yield f"{path}:{number}", text
+    try:
+        # A message in another i18n.commitEncoding is still checked, with the
+        # undecodable bytes shown as U+FFFD.
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        raise SystemExit(f"cannot read {path}: {error.strerror}") from error
+    for number, line in enumerate(text.splitlines(), start=1):
+        yield f"{path}:{number}", line
+
+
+def commit_message_file_lines(path: Path) -> Iterator[tuple[str, str]]:
+    """Yield the lines of a message file up to the scissors line.
+
+    Comment lines are checked too: git keeps them when the message comes from
+    `-m` or `-F`, and strips them only from a message written in the editor.
+    Under `commit --verbose`, git drops everything from the scissors line down,
+    whatever the comment character.
+    """
+    for location, text in file_lines(path):
+        if SCISSORS_LINE.fullmatch(text):
+            return
+        yield location, text
 
 
 def scan(lines: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
@@ -109,15 +151,21 @@ def scan(lines: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
 
 
 def collect(argv: list[str]) -> Iterator[tuple[str, str]]:
-    if not argv:
-        yield from added_lines(run_git("diff", "--cached", "--no-color"))
-    elif argv[0] == "--file" and len(argv) == 2:
-        yield from file_lines(Path(argv[1]))
-    elif len(argv) == 1 and ".." in argv[0]:
-        yield from added_lines(run_git("diff", "--no-color", argv[0]))
-        yield from commit_message_lines(argv[0])
-    else:
-        raise SystemExit(f"expected no arguments, '<base>..HEAD' or '--file <path>', got {argv}")
+    match argv:
+        case []:
+            yield from added_lines(run_git("diff", "--cached", "--no-color"))
+        case ["--file", path]:
+            yield from file_lines(Path(path))
+        case ["--commit-msg", path]:
+            yield from commit_message_file_lines(Path(path))
+        case [revision_range] if ".." in revision_range:
+            yield from added_lines(run_git("diff", "--no-color", revision_range))
+            yield from commit_message_lines(revision_range)
+        case _:
+            raise SystemExit(
+                "expected no arguments, '<base>..HEAD', '--file <path>' or "
+                f"'--commit-msg <path>', got {argv}"
+            )
 
 
 def report(title: str, findings: list[str]) -> None:
@@ -139,6 +187,6 @@ def main(argv: list[str]) -> int:
     return 1 if errors else 0
 
 
-if __name__ == "__main__":
-    sys.stdout.reconfigure(encoding="utf-8")
+if __name__ == "__main__":  # pragma: no cover: entry point that only wires tested parts
+    cast(TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
     sys.exit(main(sys.argv[1:]))

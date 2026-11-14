@@ -12,7 +12,7 @@ The goal is code a strong senior engineer would sign off: correct first, then si
 Read these when the step below says to, not up front.
 
 - `references/standards.md`: design, correctness, errors, naming, comments, tests, security, repository hygiene. Read before writing any code.
-- `references/python.md` or `references/typescript.md`: read the one matching the repository's stack. For any other language, `standards.md` alone applies.
+- `references/<language>.md`: read the file for each language the change touches: `python.md`, `typescript.md`, `c.md`, `cpp.md`, `rust.md`, `go.md`, `java.md`, `csharp.md`, `shell.md` or `sql.md`. For any other language, `standards.md` alone applies.
 - `references/plan-template.md`: read when writing a plan.
 - `references/git.md`: read before the first commit of the session and before writing a pull request.
 - `scripts/check_diff.py`: mechanical checks for dashes, US spellings, emoji, plan and AI references. Run it as described below.
@@ -21,12 +21,12 @@ Read these when the step below says to, not up front.
 
 Before any other action in a repository:
 
-1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
-2. Identify the commands for install, test, lint, type-check, dead-code check and build. If one cannot be found, say so and ask rather than guess.
+1. Read `README`, the tooling config (`pyproject.toml`, `package.json`, `tsconfig.json`, `Cargo.toml`, `go.mod`, `CMakeLists.txt`, `pom.xml`, `build.gradle`, `Directory.Build.props`, `.shellcheckrc`, `.sqlfluff`, CI workflow files) and `git log --oneline -20`. Recent commits show the conventions actually in use, and those win over this skill on matters of local style.
+2. Identify the commands for install, test, lint, type-check, dead-code check, dependency audit and build. If one cannot be found, say so and ask rather than guess.
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
    - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
-   - Install the style check as a pre-commit hook, so no commit can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, or a `pre-commit` hook exists without the marker line below, leave it alone: the repository manages its own hooks, and you run the check by hand before each commit instead. Otherwise write `pre-commit` there and make it executable:
+   - Install the style check as `pre-commit` and `commit-msg` hooks, so no change or commit message can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, leave both alone: the repository manages its own hooks, and you run the checks by hand instead. Otherwise write each hook that does not already exist, or that exists with the marker line `# engineer-style-check`, and make it executable. Leave a hook without that line alone and run its check by hand.
 
      ```sh
      #!/bin/sh
@@ -34,13 +34,19 @@ Before any other action in a repository:
      exec <python> "<absolute skill-dir>/scripts/check_diff.py"
      ```
 
-     `<python>` is whichever of `python3` or `python` runs Python 3.12 or later in this shell. Skip the hook in the repository that holds this skill: its files have to mention plans and attribution.
+     ```sh
+     #!/bin/sh
+     # engineer-style-check
+     exec <python> "<absolute skill-dir>/scripts/check_diff.py" --commit-msg "$1"
+     ```
+
+     `<python>` is whichever of `python3` or `python` runs Python 3.12 or later in this shell. Skip the hooks in the repository that holds this skill: its files have to mention plans and attribution.
 
 If the directory is not a git repository and the task is a new project, run `git init -b main` first.
 
 ## Choose the track
 
-**Quick track**: the change is confined to one or two files, adds no new type, module or boundary, and the right fix is obvious. Skip the plan. Read `standards.md` and the language file, write the test first if it is a bug fix, make the change, run the checks, commit.
+**Quick track**: the change is confined to one or two files, adds no new type, module or boundary, and the right fix is obvious. Skip the plan. Read `standards.md` and the language file, write the test first if it is a bug fix, make the change, run the checks, commit, then go to Finish.
 
 **Planned track**: everything else. When in doubt, plan: a plan costs a few hundred tokens, a wrong direction costs a rewrite.
 
@@ -76,9 +82,9 @@ Set it in the plan:
 5. Do the next unticked phase:
    - Write tests as the plan's test list specifies: first for bug fixes and for logic with clear inputs and outputs, alongside for wiring and UI.
    - Implement.
-   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, plus the plan's coverage check if the commit touches a critical module and its performance measurement if it touches the measured code. A critical module below full coverage, or a measurement over budget, means the phase is not done.
+   - While iterating, run the narrowest relevant tests. Before each commit, run the full suite, the linter, the type-checker and the dead-code check, plus the dependency audit if the commit changes a manifest or lock file, the plan's coverage check if the commit touches a critical module and its performance measurement if it touches the measured code. A critical module below full coverage, or a measurement over budget, means the phase is not done. When the audit is due and its tool is not installed, add the tool as a development dependency of the project, or state in the report and the pull request that the audit did not run. Installing it outside the repository is a hard stop in `git.md`.
    - Review your own diff against the checklist below.
-   - Stage and commit following `git.md`. The pre-commit hook runs the style check and blocks the commit on any error: fix the cause and commit again. Where no hook could be installed, run `check_diff.py` yourself before committing.
+   - Stage and commit following `git.md`. The hooks run the style check on the staged diff and on the message, and block the commit on any error: fix the cause and commit again. Where a hook could not be installed, run its check yourself: `check_diff.py` before committing, and `check_diff.py --commit-msg <file>` on the message, written to a scratch file first.
 6. Update the plan: tick the phase and its tests, rewrite `Current state` (last commit, what works, what is next), and record any decision or deviation with its reason.
 7. Continue:
    - **Single chat**: go straight to the next phase without asking.
@@ -88,10 +94,10 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 
 ## Finish
 
-After the last phase:
+After the last phase, or the commit on the quick track:
 
 1. Run every check on the whole branch and show what each produced.
-2. Get an independent review. Spawn one fresh subagent, router-expert if the model-router skill is installed, and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge.
+2. Get an independent review. Spawn one fresh subagent, router-expert if the model-router skill is installed, and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge. Tell it that it may read files and run the checks and tests, but must not edit files, check out other revisions or otherwise change the working tree: a finding it cannot confirm without a change goes in the report as a finding.
 
    Settle every finding with evidence, not opinion, because the author is the person least able to judge their own code:
 
@@ -100,7 +106,7 @@ After the last phase:
    - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
    - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
 
-   Commit each fix separately.
+   Commit each fix separately. On the quick track, amend the fixes into the change's commit instead, so a small fix lands as one commit, unless that commit has already been pushed: amending it would rewrite shared history, a hard stop in `git.md`, so commit the fixes separately.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
@@ -117,6 +123,7 @@ Run through this on every diff before committing. Each item is a common way gene
 - An ignored return value, error or promise.
 - A loop, collection, retry, queue or network call without an explicit bound or timeout.
 - Validation repeated downstream of the boundary that already did it.
+- Untrusted input reaching a query, shell command, file path or template without validation or parameters, or a secret in code, a log or a fixture.
 - A comment that restates the code, or mentions the plan, phases, the task or an assistant.
 - A name that is vague (`data`, `info`, `handle`, `manager`, `util`, `helper`) or in US spelling.
 - Formatting, renames or upgrades unrelated to the task.

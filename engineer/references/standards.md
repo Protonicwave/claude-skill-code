@@ -24,7 +24,7 @@ Several rules here come from NASA JPL's "Power of 10" and TigerBeetle's "TigerSt
 - **Make illegal states unrepresentable.** Use the type system: enums or literal unions for closed sets, distinct types for identifiers, discriminated unions for states, non-optional fields where a value is always present.
 - **Validate once, at the boundary.** Anything from outside the process (HTTP, files, environment, CLI arguments, rows other systems write) is parsed into a trusted type at entry. Inward code trusts the type and does not re-check.
 - **Assert invariants.** Where a condition can only be false because of a bug, assert it, so the bug surfaces where it happens rather than three calls later. Assertions are for programmer errors, never for validating input or for control flow.
-- **Short functions, one level of abstraction.** A function should fit on one screen, roughly 60 lines. Nesting deeper than three levels is a sign to extract or return early.
+- **Short functions, one level of abstraction.** A function should fit on one screen, roughly 60 lines. Nesting deeper than three levels is a sign to extract or return early. These limits, and the linter's complexity limits, are review aids: they mark code a reader cannot follow in one pass. The evidence that they prevent defects is weak, so restructure for the reader's sake, and suppress a single finding, with the reason, only where splitting would be harder to read, such as a flat lookup table.
 - **Smallest scope.** Declare variables where they are used. No mutable module-level state.
 - **Strictest checks the repository tolerates.** Type-checker and linter at their strictest practical settings, warnings treated as errors. No suppression without a comment stating why the checker is wrong in that instance.
 
@@ -48,7 +48,7 @@ Choose the right complexity up front: no query per row in a loop, no loading unb
 When the task states a time, memory or query budget, or exists to make something faster, the budget is a requirement like any other; for a speed-up with no stated figure, set one in the plan and tell the user. A task with neither gets no budget and no timing script: a refactor or bug fix keeps the complexity it had.
 
 - Write it down with the input size it applies to: "one lookup under 20 µs with the full ranges file loaded", not "fast". For a speed-up, measure the existing code first and report both figures.
-- Commit a script or test that measures it on that input and prints the figure next to the budget, and give its command in the README, so a later change can find and rerun it. Start a fresh process, time many repetitions inside it, and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless its threshold is several times the budget.
+- Commit a script or test that measures it on that input, prints the figure next to the budget and exits non-zero when the figure is over it, and give its command in the README, so a later change can find and rerun it. Start a fresh process, time many repetitions inside it, and report the median. A timing assertion in the default suite fails on a slow CI runner, so keep it out unless its threshold is several times the budget.
 - Run it before each commit that touches the measured code, and report the measured figure, not "within budget".
 
 ## Naming
@@ -78,6 +78,14 @@ When the task states a time, memory or query budget, or exists to make something
 - A plan lists its critical modules, if it has any: those the task's correctness rests on, or where a defect loses money, data or access. Each has full line and branch coverage from the suite, checked before every commit that touches it. A line that needs no test, such as an entry point that only wires tested parts together, is excluded with the coverage tool's pragma and the reason on the same line. Coverage proves the code ran, not that the assertions are right: it finds untested code, it does not certify tested code.
 - The full suite passes before every commit. A test is never deleted, skipped or weakened to make the suite pass. A failure unrelated to the change is reported, not fixed in passing.
 
+## Gates
+
+A gate is a check that blocks a commit: the suite, linter, type-checker, dead-code check, coverage check, dependency audit or a performance measurement.
+
+- **Every gate can fail.** It exits non-zero on a finding. Nothing in its configuration reduces findings to output: no report-only mode, no threshold set so low that nothing fails it, no option that passes when the tool cannot reach its service. When you add a gate or change its configuration, plant one finding it should catch, run it, see it fail, then remove the finding. A gate that has never failed is unproven.
+- **Dead code is looked for across the whole program.** A compiler warning for unused private members misses a public function nothing calls. Use the whole-program tool the language file names. Where it names none, search the repository for callers of each public name the diff adds.
+- **Coverage falls back where branches cannot be measured.** Where the toolchain reports only line or statement coverage, a critical module needs full line coverage plus a test for each outcome of every condition in it, listed in the plan's test list.
+
 ## Security
 
 - Untrusted input is validated at the boundary (see Correctness).
@@ -85,6 +93,8 @@ When the task states a time, memory or query budget, or exists to make something
 - Least privilege for anything created: tokens, roles, file permissions, container users.
 - Secrets never appear in code, logs, error messages or test fixtures.
 - A change touching authentication, cryptography, permissions or sessions states the threat it defends against before it is written.
+- The linter's security rules are on, as the language file names them.
+- The dependency audit is a gate. Run the language file's audit command before every commit that changes a manifest or lock file, and before opening a pull request. Fix a finding by upgrading. When no fixed version exists, or the vulnerable code is unreachable from this project, ignore that one advisory by its identifier, in the tool's configuration or on its command line, with the reason beside it, and say so in the pull request. Where the tool cannot ignore a single advisory, the audit stays failing: say so in the pull request and leave the decision to the reviewer. Never lower the severity level or skip the audit to get past a finding.
 
 ## Dependencies
 
