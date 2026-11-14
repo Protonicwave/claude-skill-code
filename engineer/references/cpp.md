@@ -84,8 +84,10 @@ Follow the repository's existing tooling. The defaults below are for new project
 - Check a critical module with gcovr after the tests run. It exits non-zero when either figure is below its threshold, and `--filter` keeps the report to the named file:
 
   ```sh
-  gcovr --root . --filter src/<module>.cpp --fail-under-line 100 --fail-under-branch 100 <build directory>
+  gcovr --root . --filter src/<module>.cpp --exclude-throw-branches --exclude-unreachable-branches --exclude-noncode-lines --fail-under-line 100 --fail-under-branch 100 <build directory>
   ```
+
+  The three exclusions remove what the compiler generates for exceptions. Without them a fully tested function that calls `push_back` stays below 100%: the branch to the throw is never taken, and the closing brace runs only when unwinding. An untested `if` still fails the check.
 
 ## .gitignore for new projects
 
