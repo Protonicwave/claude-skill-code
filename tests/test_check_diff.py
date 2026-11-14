@@ -53,6 +53,29 @@ def test_error_fails_the_check(
     assert f"body.md:1: {label}: {text}" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("text", ["pages 10\N{EN DASH}20", "between 1.5\N{EN DASH}2.0 V"])
+def test_en_dash_in_a_numeric_range_is_a_warning(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], text: str
+) -> None:
+    assert check_text(tmp_path, text + "\n") == 0
+    assert "body.md:1: en dash in a numeric range '" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "pages 10\N{EN DASH}20 \N{EN DASH} see above",
+        "pages 10 \N{EN DASH} 20",
+        "pages 10\N{EM DASH}20",
+    ],
+)
+def test_dash_beside_a_range_or_spaced_out_is_an_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], text: str
+) -> None:
+    assert check_text(tmp_path, text + "\n") == 1
+    assert "body.md:1: em or en dash: " in capsys.readouterr().out
+
+
 @pytest.mark.parametrize(
     "emoji",
     [

@@ -33,7 +33,8 @@ EMOJI_CLASS = (
 )
 
 ERROR_PATTERNS: dict[str, re.Pattern[str]] = {
-    "em or en dash": re.compile("[\u2014\u2013]"),
+    # An en dash between two digits is a range, not punctuation: a warning instead.
+    "em or en dash": re.compile(r"\N{EM DASH}|(?<!\d)\N{EN DASH}|\N{EN DASH}(?!\d)"),
     "tool attribution": re.compile(r"co-authored-by|generated (with|by) ", re.IGNORECASE),
     "plan reference": re.compile(r"\.plans/|implementation plan|as per (the )?plan", re.IGNORECASE),
     "emoji": re.compile(EMOJI_CLASS),
@@ -42,6 +43,7 @@ ERROR_PATTERNS: dict[str, re.Pattern[str]] = {
 # Warnings, not errors: each can be legitimate (an app that calls the Anthropic
 # API, a three-phase power model, CSS `color`), so a human judges them.
 WARNING_PATTERNS: dict[str, re.Pattern[str]] = {
+    "en dash in a numeric range": re.compile(r"\d\N{EN DASH}\d"),
     "assistant name": re.compile(r"\b(claude|anthropic|chatgpt|copilot)\b", re.IGNORECASE),
     "possible plan reference": re.compile(r"\bphase \d", re.IGNORECASE),
     "US spelling": re.compile(
