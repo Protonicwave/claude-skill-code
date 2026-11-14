@@ -1,6 +1,6 @@
 # Shell
 
-Follow the repository's existing tooling. The defaults below are for new scripts or where the repository has none. They cover Bash; a POSIX `sh` script gets the same tools with `shell=sh`.
+Follow the repository's existing tooling. The defaults below are for new scripts or where the repository has none. They cover Bash. A POSIX `sh` script gets the same tools: ShellCheck and shfmt read its `#!/bin/sh` shebang and check it as POSIX.
 
 ## Detect
 
@@ -32,16 +32,17 @@ Shell suits small utilities and wrapper scripts. Google's style guide sets the l
 
 ## Idiom
 
-- Double-quote every expansion: `"$var"`, `"$(command)"`, `"${array[@]}"`. Unquoted, the value is split on whitespace and expanded as a glob.
+- Double-quote every expansion and brace every variable name: `"${var}"`, `"$(command)"`, `"${array[@]}"`. Unquoted, the value is split on whitespace and expanded as a glob. `enable=all` turns on the brace check (SC2250); `"$@"` and the other special parameters are exempt.
+- Assign a command substitution to a variable before passing it as an argument. Inline, its exit status is lost even under `set -e`, and `enable=all` flags it (SC2312).
 - `$(command)`, never backticks. `[[ ]]` in Bash, which does no word splitting or glob expansion inside.
-- Put argument lists, especially command-line flags, in arrays: `"${args[@]}"` passes each element as one word.
+- Put argument lists, especially command-line flags, in arrays: `"${args[@]}"` passes each element as one word. Under `set -u`, Bash before 4.4 stops with "unbound variable" when the array is empty; a script that must run there writes `${args[@]+"${args[@]}"}`.
 - Declare function variables with `local`. A script long enough to hold another function puts its main program in a `main` function at the bottom, called as `main "$@"`.
 - `read -r`, so a backslash is data and not an escape.
 - Create temporary files and directories with `mktemp` and remove them from an `EXIT` trap, which runs when the shell exits, `exit` included:
 
   ```bash
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "$tmp_dir"' EXIT
+  trap 'rm -rf "${tmp_dir}"' EXIT
   ```
 
 ## Tests
