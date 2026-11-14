@@ -19,11 +19,24 @@ from io import TextIOWrapper
 from pathlib import Path
 from typing import cast
 
+# Whole Unicode blocks rather than the emoji property, which re cannot match. The
+# BMP blocks also hold plain symbols such as check marks; the style bans those too.
+# U+FE0F requests emoji presentation, so it catches emoji built on any other base.
+EMOJI_CLASS = (
+    "["
+    "\U0001f000-\U0001faff"  # supplementary emoji blocks, flags included
+    "\U00002600-\U000027bf"  # Miscellaneous Symbols and Dingbats
+    "\U0000231a\U0000231b\U000023e9-\U000023fa"  # watch, hourglass, media controls
+    "\U00002b50-\U00002b55"  # stars and circles
+    "\U0000fe0f"  # variation selector 16
+    "]"
+)
+
 ERROR_PATTERNS: dict[str, re.Pattern[str]] = {
     "em or en dash": re.compile("[\u2014\u2013]"),
     "tool attribution": re.compile(r"co-authored-by|generated (with|by) ", re.IGNORECASE),
     "plan reference": re.compile(r"\.plans/|implementation plan|as per (the )?plan", re.IGNORECASE),
-    "emoji": re.compile("[\U0001f300-\U0001faff]"),
+    "emoji": re.compile(EMOJI_CLASS),
 }
 
 # Warnings, not errors: each can be legitimate (an app that calls the Anthropic

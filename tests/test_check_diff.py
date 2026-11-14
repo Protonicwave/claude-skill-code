@@ -54,6 +54,47 @@ def test_error_fails_the_check(
 
 
 @pytest.mark.parametrize(
+    "emoji",
+    [
+        "\N{WHITE HEAVY CHECK MARK}",
+        "\N{SPARKLES}",
+        "\N{WARNING SIGN}",
+        "\N{WARNING SIGN}\N{VARIATION SELECTOR-16}",
+        "\N{WHITE MEDIUM STAR}",
+        "\N{HOURGLASS WITH FLOWING SAND}",
+        "\N{REGIONAL INDICATOR SYMBOL LETTER G}\N{REGIONAL INDICATOR SYMBOL LETTER B}",
+        "1\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
+        "\N{BLACK RIGHT-POINTING TRIANGLE}\N{VARIATION SELECTOR-16}",
+        "\N{WOMAN}\N{ZERO WIDTH JOINER}\N{PERSONAL COMPUTER}",
+    ],
+)
+def test_emoji_fails_the_check(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], emoji: str
+) -> None:
+    assert check_text(tmp_path, f"done {emoji}\n") == 1
+    assert "body.md:1: emoji: " in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "symbol",
+    [
+        "\N{RIGHTWARDS ARROW}",
+        "\N{MULTIPLICATION SIGN}",
+        "\N{DEGREE SIGN}",
+        "\N{MICRO SIGN}",
+        "\N{GREEK SMALL LETTER SIGMA}",
+        "\N{COPYRIGHT SIGN}",
+        "\N{BLACK RIGHT-POINTING TRIANGLE}",
+    ],
+)
+def test_symbols_used_in_technical_text_pass(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], symbol: str
+) -> None:
+    assert check_text(tmp_path, f"x {symbol} y\n") == 0
+    assert capsys.readouterr().out == "Clean.\n"
+
+
+@pytest.mark.parametrize(
     ("text", "label"),
     [
         ("ask Claude first", "assistant name 'Claude'"),
