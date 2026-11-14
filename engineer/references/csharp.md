@@ -17,6 +17,7 @@ Follow the repository's existing tooling. The defaults below are for new project
       <AnalysisMode>All</AnalysisMode>
       <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
       <Nullable>enable</Nullable>
+      <NuGetAuditMode>all</NuGetAuditMode>
     </PropertyGroup>
     <ItemGroup>
       <AdditionalFiles Include="$(MSBuildThisFileDirectory)CodeMetricsConfig.txt" />
@@ -40,7 +41,7 @@ Follow the repository's existing tooling. The defaults below are for new project
   CA1502 is cyclomatic complexity. Its threshold, 25 by default, is set in `CodeMetricsConfig.txt` with a line such as `CA1502: 10`; it is a review aid, as `standards.md` describes. IDE0051 (unused private member) and IDE0052 (private member written but never read) do not fail the build under `All` unless their severity is set here.
 - Before each commit, `dotnet build`. It fails on any analyser, compiler, nullable or NuGet warning.
 - Dead code: IDE0051, IDE0052 and CA1823 cover private members, and CA1812 internal classes never created. Nothing reports an unused public member, so search for callers of each public name the diff adds, as `standards.md` says.
-- Dependency audit: NuGet audits on every restore, and from `net10.0` it includes transitive packages (`NuGetAuditMode` `all`). With `TreatWarningsAsErrors`, a vulnerable package fails `dotnet build` with NU1901 to NU1904, one code per severity. `dotnet list package --vulnerable` exits 0 even when it lists a vulnerable package, so it is a report, never the gate.
+- Dependency audit: NuGet audits on every restore. `NuGetAuditMode` `all` includes transitive packages; it is the default from `net10.0`, and below that the default audits direct packages only, so the property above sets it. With `TreatWarningsAsErrors`, a vulnerable package fails `dotnet build` with NU1901 to NU1904, one code per severity. `dotnet list package --vulnerable` exits 0 even when it lists a vulnerable package, so it is a report, never the gate.
 
 ## Types
 
