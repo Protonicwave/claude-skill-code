@@ -15,7 +15,9 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable, Iterator
+from io import TextIOWrapper
 from pathlib import Path
+from typing import cast
 
 ERROR_PATTERNS: dict[str, re.Pattern[str]] = {
     "em or en dash": re.compile("[\u2014\u2013]"),
@@ -109,15 +111,18 @@ def scan(lines: Iterable[tuple[str, str]]) -> tuple[list[str], list[str]]:
 
 
 def collect(argv: list[str]) -> Iterator[tuple[str, str]]:
-    if not argv:
-        yield from added_lines(run_git("diff", "--cached", "--no-color"))
-    elif argv[0] == "--file" and len(argv) == 2:
-        yield from file_lines(Path(argv[1]))
-    elif len(argv) == 1 and ".." in argv[0]:
-        yield from added_lines(run_git("diff", "--no-color", argv[0]))
-        yield from commit_message_lines(argv[0])
-    else:
-        raise SystemExit(f"expected no arguments, '<base>..HEAD' or '--file <path>', got {argv}")
+    match argv:
+        case []:
+            yield from added_lines(run_git("diff", "--cached", "--no-color"))
+        case ["--file", path]:
+            yield from file_lines(Path(path))
+        case [revision_range] if ".." in revision_range:
+            yield from added_lines(run_git("diff", "--no-color", revision_range))
+            yield from commit_message_lines(revision_range)
+        case _:
+            raise SystemExit(
+                f"expected no arguments, '<base>..HEAD' or '--file <path>', got {argv}"
+            )
 
 
 def report(title: str, findings: list[str]) -> None:
@@ -139,6 +144,6 @@ def main(argv: list[str]) -> int:
     return 1 if errors else 0
 
 
-if __name__ == "__main__":
-    sys.stdout.reconfigure(encoding="utf-8")
+if __name__ == "__main__":  # pragma: no cover: entry point that only wires tested parts
+    cast(TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
     sys.exit(main(sys.argv[1:]))

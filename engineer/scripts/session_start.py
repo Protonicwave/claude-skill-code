@@ -14,7 +14,9 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from io import TextIOWrapper
 from pathlib import Path
+from typing import cast
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 GIT_TIMEOUT_SECONDS = 5
@@ -64,7 +66,7 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    sys.stdin.reconfigure(encoding="utf-8")
-    sys.stdout.reconfigure(encoding="utf-8")
+if __name__ == "__main__":  # pragma: no cover: entry point that only wires tested parts
+    cast(TextIOWrapper, sys.stdin).reconfigure(encoding="utf-8")
+    cast(TextIOWrapper, sys.stdout).reconfigure(encoding="utf-8")
     sys.exit(main())
