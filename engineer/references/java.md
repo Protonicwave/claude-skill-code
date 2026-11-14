@@ -66,7 +66,7 @@ Traps that change the complexity class, from the JDK documentation:
 
 ## Tests
 
-- JUnit, run by `mvn verify`.
+- JUnit, run by `mvn clean verify`.
 - Coverage of critical modules with JaCoCo: `prepare-agent`, then `check` in `verify`, which fails the build by default. Limit the check to the critical classes with `<includes>` and require every line and branch:
 
   ```xml
