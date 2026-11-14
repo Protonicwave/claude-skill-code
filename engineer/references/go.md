@@ -30,7 +30,7 @@ Follow the repository's existing tooling. The defaults below are for new project
   Run `golangci-lint run ./...`. The `standard` set includes `errcheck`, which fails on an unchecked error, and `unused`. `gosec` is the security scanner. `gocognit` and `gocyclo` default to 30, and their documentation recommends 10 to 20; they are review aids, as `standards.md` describes.
 
 - Dead code: `unused` reports unexported identifiers only. An exported function nothing calls passes it, so search for callers of each exported name the diff adds, as `standards.md` says.
-- Unused requirements: `go mod tidy -diff` changes nothing and exits non-zero when `go.mod` or `go.sum` is not tidy.
+- Unused requirements: `go mod tidy -diff`, from Go 1.23, changes nothing and exits non-zero when `go.mod` or `go.sum` is not tidy.
 - Dependency audit: `govulncheck ./...`. It exits non-zero when the code calls a function with a known vulnerability. A vulnerable module whose affected code is never called is listed without failing the run. A structured output format, such as `-format json`, exits 0 whatever it finds, so never use one as the gate. govulncheck cannot silence a finding: upgrade the module, or say in the pull request why the finding stands.
 
 ## Types
@@ -61,12 +61,12 @@ Follow the repository's existing tooling. The defaults below are for new project
 
 ## Tests
 
-- `go test -race ./...`. The race detector costs 5x to 10x in memory and 2x to 20x in time, so keep benchmarks out of race runs.
-- Go measures statement coverage, not branch coverage, so the fallback in `standards.md` applies to a critical module: full coverage of its statements plus a test for each outcome of every condition. Check it by file, which fails when any function in the file is below 100% and when the file is missing from the profile:
+- `go test -race ./...`. The race detector costs 5x to 10x in memory and 2x to 20x in time, so keep benchmarks out of race runs. It needs cgo: with no C compiler on PATH, Go turns cgo off and the run stops with "-race requires cgo".
+- Go measures statement coverage, not branch coverage, so the fallback in `standards.md` applies to a critical file: full coverage of its statements plus a test for each outcome of every condition. Check it by file, which fails when any function in the file is below 100% and when the file is missing from the profile:
 
   ```sh
   go test -coverpkg=./... -coverprofile=cover.out ./...
-  go tool cover -func=cover.out | awk -v f='/<module>.go:' 'index($1, f) { n++; if ($NF != "100.0%") bad++ } END { exit (n == 0 || bad > 0) }'
+  go tool cover -func=cover.out | awk -v f='/<critical file>.go:' 'index($1, f) { n++; if ($NF != "100.0%") bad++ } END { exit (n == 0 || bad > 0) }'
   ```
 
   `-coverpkg=./...` measures every package from every test, rather than only the package each test belongs to.
