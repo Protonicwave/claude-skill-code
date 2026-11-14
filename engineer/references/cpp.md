@@ -2,9 +2,7 @@
 
 Follow the repository's existing tooling. The defaults below are for new projects or where the repository has none. Rule numbers such as R.11 are from the C++ Core Guidelines.
 
-## Detect
-
-`CMakeLists.txt`, `meson.build` or `Makefile` names the build. `compile_commands.json` is what clang-tidy reads, through `-p <build directory>`, to see the real compiler flags.
+Read `c.md` as well. Its build detection, cppcheck dead-code check, dependency audit, sanitiser builds, `--coverage` flags and `.gitignore` apply to C++ unchanged. This file gives what differs.
 
 ## Tooling defaults for new projects
 
@@ -30,14 +28,6 @@ Follow the repository's existing tooling. The defaults below are for new project
 
   Run it with `clang-tidy -quiet -p <build directory> src/*.cpp` where the build writes `compile_commands.json`, so it sees the real flags. Without one, give the warning flags above after `--`, which also tells clang-tidy to ignore any compilation database: `clang-tidy -quiet src/*.cpp -- <warning flags>`.
 
-- cppcheck as the dead-code check. `unusedFunction` needs the whole program in one run, so give it the source tree, never one file at a time. Without `--error-exitcode` it exits 0 whatever it finds:
-
-  ```sh
-  cppcheck -q --enable=warning,style,performance,portability,unusedFunction --error-exitcode=1 src
-  ```
-
-- There is no dependency audit command for C++. OSV-Scanner reads `conan.lock`, but it holds no ConanCenter advisories for common libraries and passed a lock pinning zlib 1.2.11, so it is not a gate here. When a change adds or upgrades a vendored or package-managed library, say in the report and the pull request that it was not audited, and name the library and its version.
-
 ## Types
 
 - Interfaces are precisely and strongly typed (I.4).
@@ -55,18 +45,6 @@ Follow the repository's existing tooling. The defaults below are for new project
 - Every resource is managed by a handle that releases it in its destructor (R.1).
 - No explicit `new` and `delete` (R.11), and no `malloc` and `free` (R.10). The result of any explicit allocation goes straight to a managing object (R.12).
 - `std::unique_ptr` holds an owning pointer (ES.24). A raw pointer `T*` never owns (R.3).
-- The test suite also runs under the sanitisers, in a separate build and CI job from the release build. AddressSanitizer slows a program about 2x.
-
-  ```sh
-  -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer
-  ```
-
-  `-fno-sanitize-recover=all` makes UndefinedBehaviorSanitizer exit non-zero on its first report instead of printing and carrying on.
-- Code that uses threads also runs its tests under ThreadSanitizer, in a third build: it cannot be combined with AddressSanitizer in one program. Every object linked in must be compiled with it. It costs about 5x to 15x in time and 5x to 10x in memory, and exits with status 66 on a report.
-
-  ```sh
-  -g -O1 -fsanitize=thread
-  ```
 
 ## Idiom
 
@@ -80,7 +58,6 @@ Follow the repository's existing tooling. The defaults below are for new project
 
 ## Tests
 
-- Build the tests with `--coverage` on both the compile and the link line. It is shorthand for `-fprofile-arcs -ftest-coverage` when compiling and `-lgcov` when linking.
 - Check a critical module with gcovr after the tests run. It exits non-zero when either figure is below its threshold, and `--filter` keeps the report to the named file:
 
   ```sh
@@ -88,12 +65,3 @@ Follow the repository's existing tooling. The defaults below are for new project
   ```
 
   The three exclusions remove what the compiler generates for exceptions. Without them a fully tested function that calls `push_back` stays below 100%: the branch to the throw is never taken, and the closing brace runs only when unwinding. An untested `if` still fails the check.
-
-## .gitignore for new projects
-
-```
-build/
-*.o
-*.gcda
-*.gcno
-```
