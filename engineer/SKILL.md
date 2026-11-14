@@ -26,7 +26,7 @@ Before any other action in a repository:
 3. Do not create `CLAUDE.md`, `AGENTS.md` or any other assistant file. The repository should contain only what the project needs.
 4. Prepare the repository, once. Both steps are local to this clone and never committed, so the repository shows no trace of them.
    - Find the exclude file with `git rev-parse --git-path info/exclude` and append `.plans/` if it is not already there. Plans then stay out of git without a `.gitignore` line.
-   - Install the style check as `pre-commit` and `commit-msg` hooks, so no change or commit message can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, leave both alone: the repository manages its own hooks, and you run the checks by hand instead. Otherwise write each hook that does not already exist, or that exists with the marker line below, and make it executable. Leave a hook without the marker alone and run its check by hand.
+   - Install the style check as `pre-commit` and `commit-msg` hooks, so no change or commit message can skip it. Find the hooks directory with `git rev-parse --git-path hooks`. If `git config core.hooksPath` is set, leave both alone: the repository manages its own hooks, and you run the checks by hand instead. Otherwise write each hook that does not already exist, or that exists with the marker line `# engineer-style-check`, and make it executable. Leave a hook without that line alone and run its check by hand.
 
      ```sh
      #!/bin/sh
@@ -46,7 +46,7 @@ If the directory is not a git repository and the task is a new project, run `git
 
 ## Choose the track
 
-**Quick track**: the change is confined to one or two files, adds no new type, module or boundary, and the right fix is obvious. Skip the plan. Read `standards.md` and the language file, write the test first if it is a bug fix, make the change, run the checks, commit.
+**Quick track**: the change is confined to one or two files, adds no new type, module or boundary, and the right fix is obvious. Skip the plan. Read `standards.md` and the language file, write the test first if it is a bug fix, make the change, run the checks, commit, then go to Finish.
 
 **Planned track**: everything else. When in doubt, plan: a plan costs a few hundred tokens, a wrong direction costs a rewrite.
 
@@ -94,7 +94,7 @@ Stop mid-phase and ask only if the plan turns out to be wrong, a check fails for
 
 ## Finish
 
-After the last phase:
+After the last phase, or the commit on the quick track:
 
 1. Run every check on the whole branch and show what each produced.
 2. Get an independent review. Spawn one fresh subagent, router-expert if the model-router skill is installed, and give it only: the base branch name, the path to `references/standards.md`, and the self-review checklist below. Do not give it the plan or your reasoning: a reviewer who knows why each piece exists will accept it, which is exactly the blind spot being covered. Ask it to read `git diff <base>...HEAD` and report, with file and line, anything over-built (a piece that could be deleted or inlined without losing a requirement), anything it had to read twice to follow (a name, branch or function whose purpose was not clear on first reading), any defect, and any unhandled edge. Tell it that it may read files and run the checks and tests, but must not edit files, check out other revisions or otherwise change the working tree: a finding it cannot confirm without a change goes in the report as a finding.
@@ -106,7 +106,7 @@ After the last phase:
    - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
    - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
 
-   Commit each fix separately. On the quick track, amend the fixes into the change's commit instead, so a small fix lands as one commit. Nothing is pushed before step 5, so the amend rewrites nothing shared.
+   Commit each fix separately. On the quick track, amend the fixes into the change's commit instead, so a small fix lands as one commit, unless that commit has already been pushed: amending it would rewrite shared history, a hard stop in `git.md`, so commit the fixes separately.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
