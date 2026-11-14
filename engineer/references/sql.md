@@ -26,7 +26,7 @@ Follow the repository's existing tooling. The defaults below are for new project
 
 ## Performance
 
-- Read the plan with `EXPLAIN` before and after a query change. A sequential scan reads every row of the table; a filter that is not an index condition is checked against each row scanned. `EXPLAIN ANALYZE` runs the statement, so use it only on a local database, as `git.md` says, and wrap a data-modifying statement in a transaction that rolls back.
+- Read the plan with `EXPLAIN` before and after a query change. A sequential scan reads every row of the table; a filter that is not an index condition is checked against each row scanned. A plan on a toy-sized table does not predict one on a large table, so load the local database with data of realistic size first. `EXPLAIN ANALYZE` runs the statement, so use it only on a local database, as `git.md` says, and wrap a data-modifying statement in a transaction that rolls back. The rollback does not return sequence values the statement took.
 - A multicolumn B-tree index works best with constraints on its leading columns: put the columns tested for equality first and the range column after them. Indexes of more than three columns rarely help; one column is usually enough.
 - A query that filters on an expression, such as `lower(email)`, needs an index on that expression. The expression is computed on every insert and update, so add one only for a query that needs it.
 
