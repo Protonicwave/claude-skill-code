@@ -29,7 +29,17 @@ Follow the repository's existing tooling. The defaults below are for new project
   `S` is flake8-bandit's security rules: shell calls, SQL built from strings, hard-coded passwords. It is the security scanner, so it stays in `select`.
 
 - Vulture (`vulture src --min-confidence 80`) before each commit, to catch functions, classes and variables nothing calls. Ruff only finds unused imports and locals.
-- pip-audit for the dependency audit: `pip-audit .` for a project declared in `pyproject.toml`, `pip-audit -r requirements.txt` for a requirements file. It exits 1 on any known vulnerability. It reads `pyproject.toml` and `pylock.*.toml`, not `uv.lock` or `poetry.lock`.
+- pip-audit for the dependency audit. It exits 1 on any known vulnerability. It reads `pyproject.toml`, `pylock.*.toml` and requirements files, not `uv.lock` or `poetry.lock`, so audit the locked versions:
+  - with uv, export the lock to a scratch directory and audit that:
+
+    ```sh
+    tmp="$(mktemp -d)"
+    uv export --format pylock.toml --no-emit-project -o "$tmp/pylock.toml"
+    pip-audit --locked "$tmp"
+    ```
+
+  - with a requirements file, `pip-audit -r requirements.txt`.
+  - `pip-audit .` resolves the ranges in `pyproject.toml` afresh, so it audits the versions a new install would get, not the ones the project runs. Use it only where nothing is locked.
 - mypy with `strict = true`, or pyright in strict mode if the repository uses it.
 - pytest. Tests live in `tests/`, mirroring the package layout.
 - `src/` layout for anything that will be installed or imported by other code.
