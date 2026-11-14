@@ -106,7 +106,7 @@ After the last phase:
    - **Defect or unhandled edge**: write the test that would expose it. If it fails, fix the code. If it passes, the finding is disproved and the test stays in the suite as proof.
    - **Neither settles it**: send your reasoning back to the same reviewer once. If the reviewer still holds the finding, stop and put it to the user before opening the pull request. Nothing is rejected silently.
 
-   Commit each fix separately.
+   Commit each fix separately. On the quick track, amend the fixes into the change's commit instead, so a small fix lands as one commit. Nothing is pushed before step 5, so the amend rewrites nothing shared.
 3. Run `python <skill-dir>/scripts/check_diff.py <base>..HEAD`, which also checks commit messages.
 4. Write the pull request description following `git.md`, save it to a scratch file outside the repository, and run `check_diff.py --file <path>` on it.
 5. If the repository has a GitHub remote, push the branch and open the pull request with `gh pr create`. Never merge. Without a remote, give the user the description.
